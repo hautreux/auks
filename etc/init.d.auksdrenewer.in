@@ -1,0 +1,92 @@
+#!/bin/sh
+#
+# Init file for Auks Crendetial renewer daemon
+#
+# chkconfig: 2345 56 24
+# description: Auks Credentials Renewer Daemon
+#
+# processname: auksdrenewer
+# pidfile: /var/run/auksdrenewer.pid
+
+# source function library
+. /etc/rc.d/init.d/functions
+
+export PATH=${PATH}:@prefix@/sbin
+
+typeset program_transform_prefix="@program_transform_name@"
+if [[ -z ${program_transform_prefix} ]]
+    then
+    program_transform_prefix="s,^,,"
+fi
+
+prog="auksdrenewer"
+prog="$(echo ${prog} | sed ${program_transform_prefix})"
+
+# pull in sysconfig settings
+[ -f /etc/sysconfig/${prog} ] && . /etc/sysconfig/${prog}
+
+RETVAL=0
+
+PID_FILE=/var/run/${prog}.pid
+
+start()
+{
+
+    echo -n $"Starting $prog:"
+    $prog ${AUKSDRENEWER_OPTIONS} && success || failure
+    RETVAL=$?
+    [ "$RETVAL" = 0 ] && touch /var/lock/subsys/${prog}
+    echo
+}
+
+stop()
+{
+    echo -n $"Stopping $prog:"
+    killproc ${prog} -TERM
+    RETVAL=$?
+    [ "$RETVAL" = 0 ] && rm -f /var/lock/subsys/${prog}
+    echo
+}
+
+reload()
+{
+    echo -n $"Reloading $prog:"
+    killproc ${prog} -HUP
+    RETVAL=$?
+    echo
+}
+
+case "$1" in
+    start)
+	start
+	;;
+    stop)
+	stop
+	;;
+    restart)
+	stop
+	start
+	;;
+    reload)
+	reload
+	;;
+    condrestart)
+	if [ -f /var/lock/subsys/${prog} ] ; then
+	    do_restart_sanity_check
+	    if [ "$RETVAL" = 0 ] ; then
+		stop
+				# avoid race
+		sleep 3
+		start
+	    fi
+	fi
+	;;
+    status)
+	status ${prog}
+	RETVAL=$?
+	;;
+    *)
+	echo $"Usage: $0 {start|stop|restart|reload|condrestart|status}"
+	RETVAL=1
+esac
+exit $RETVAL

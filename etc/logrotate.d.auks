@@ -1,0 +1,26 @@
+
+/var/log/auksd.log {
+
+	missingok
+	nomail
+	nocompress
+	rotate 7
+	size=10M
+	postrotate
+		[ -x /etc/init.d/auksd ] && /etc/init.d/auksd restart
+	endscript
+
+}
+
+/var/log/auksdrenewer.log {
+
+	missingok
+	nomail
+	nocompress
+	rotate 7
+	size=10M
+	postrotate
+		[ -x /etc/init.d/auksdrenewer ] && /etc/init.d/auksdrenewer restart
+	endscript
+
+}

@@ -1,0 +1,138 @@
+.TH "aukspriv" "March 2009" "Matthieu Hautreux" "aukspriv"
+
+.SH "NAME"
+aukspriv \- AUKS daemon that handles periodical Keytab to TGT operations
+
+.SH "SYNOPSIS"
+\fBaukspriv\fR [\fI-h\fR] [\fI-v\fR]
+
+.SH "DESCRIPTION"
+.LP
+\fBaukspriv\fR is a simple bash script run as a daemon that periodically 
+build a kerberos credential cache based on a keytab.
+.LP
+This tool enables to ease the usage of system users as kerberos client.
+.LP
+\fBaukspriv\fR can be launched at startup using the eponymous service.
+
+.SH "OPTIONS"
+.LP
+
+.TP
+\fB\-h\fR
+print this message
+
+.TP
+\fB\-v\fR
+increase verbosity output and prevent from starting in background
+
+.SH "ERRORS"
+.LP
+exit status is zero in case of success, not zero otherwise.
+
+.SH "ENVIRONMENT VARIABLES"
+.LP
+.LP
+\fBAUKS_PRIV_USER\fR
+.br
+	set the user to get credential for. The default value is \fBroot\fR.
+.LP
+\fBAUKS_PRIV_KEYTAB\fR
+.br
+	set the keytab file to use. The	default value is 
+	\fB/etc/krb5.keytab\fR
+.LP
+\fBAUKS_PRIV_PRINC\fR
+.br
+	set the krb5 principal name to use. The default value is the 
+	first principal found in the keytab.
+.LP
+\fBAUKS_PRIV_CCACHE_APPEND\fR
+.br
+	set the string to append to ccache pattern \fB/tmp/krb5cc_%uid\fR.
+	The default value is no string to append.
+.LP
+\fBAUKS_PRIV_LIFETIME\fR
+.br
+	set the credential lifetime in seconds. The default value is 
+	\fB36000\fR (10h)
+.LP
+\fBAUKS_PRIV_RENEW_INT\fR
+.br
+	set the time to wait between two build stages. The default value 
+	is \fB35000\fR (seconds).
+.LP
+\fBAUKS_PRIV_SYSLOG_PRIO\fR
+.br
+	set the syslog facility to use for log information. The default 
+	value is \fBlocal3.notice\fR . A \fBnone\fR value means logs on stdout
+
+.SH "COPYING"
+.LP
+Copyright  CEA/DAM/DIF (2009)
+.br
+
+.br
+This software is a computer program whose purpose is to simplify
+.br
+the addition of kerberos credential support in Batch applications.
+.br
+
+.br
+This software is governed by the CeCILL-C license under French law and
+.br
+abiding by the rules of distribution of free software.  You can  use, 
+.br
+modify and/ or redistribute the software under the terms of the 
+.br
+CeCILL-C license as circulated by CEA, CNRS and INRIA at the 
+.br
+following URL "http://www.cecill.info". 
+.br
+
+.br
+As a counterpart to the access to the source code and  rights to copy,
+.br
+modify and redistribute granted by the license, users are provided only
+.br
+with a limited warranty  and the software's author,  the holder of the
+.br
+economic rights,  and the successive licensors  have only  limited
+.br
+liability. 
+.br
+
+.br
+In this respect, the user's attention is drawn to the risks associated
+.br
+with loading,  using,  modifying and/or developing or reproducing the
+.br
+software by the user in light of its specific status of free software,
+.br
+that may mean  that it is complicated to manipulate,  and  that  also
+.br
+therefore means  that it is reserved for developers  and  experienced
+.br
+professionals having in-depth computer knowledge. Users are therefore
+.br
+encouraged to load and test the software's suitability as regards their
+.br
+requirements in conditions enabling the security of their systems 
+.br
+and/or data to be ensured and,  more generally, to use and operate 
+.br
+it in the same conditions as regards security. 
+.br
+
+.br
+The fact that you are presently reading this means that you have had
+.br
+knowledge of the CeCILL-C license and that you accept its terms.
+.br
+
+.SH "SEE ALSO"
+.BR auks (1),
+.BR auks.conf (5),
+.BR auks.acl (5),
+.BR auksd (8),
+.BR auksdrenewer (8)

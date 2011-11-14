@@ -1,0 +1,160 @@
+.TH "auks" "March 2009" "Matthieu Hautreux" "auks"
+
+.SH "NAME"
+auks \- client program to manage AUKS credentials
+
+.SH "SYNOPSIS"
+\fBauks\fR [\fI-h\fR] [\fI-dv\fR] [\fI-f auks.conf\fR] [\fI-p|a|g|r|D\fR] [\fI-R once|loop\fR] [\fI-u uid\fR] [\fI-C ccache\fR]
+
+.SH "DESCRIPTION"
+.LP
+The AUKS commandline client can be used to manage AUKS daemon credentials.
+Depending on his privileges, a client can use it to add/get/remove
+credentials or dump all the available credentials.
+
+.SH "OPTIONS"
+.LP
+
+.TP
+\fB\-h\fR
+print this message
+
+.TP
+\fB\-v\fR
+increase verbosity output
+
+.TP
+\fB\-d\fR
+increase debug output
+
+.TP
+\fB\-f auks.conf\fR
+use \fIauks.conf\fR as the configuration file.
+The default is \fB/etc/auks/auks.conf\fR.
+
+.TP
+\fB\-p\fR
+do a simple ping request on the first responding AUKS daemon (default).
+This operation requires at least to have a valid kerberos credential
+to connect to the AUKS daemon
+
+.TP
+\fB\-a\fR
+add client kerberos credential to the first responding AUKS daemon. If 
+client kerberos credential is not an addressless kerberos TGT, an
+addressless cred is gotten and then transmitted in place of the given one.
+This operation requires at least the \fBguest\fR privilege.
+
+.TP
+\fB\-g\fR
+get AUKS kerberos credential of the requested uid using the first responding 
+AUKS daemon and stores it into the requested credential cache. This operation 
+requires at least the \fBuser\fR privilege.
+
+.TP
+\fB\-r\fR
+remove AUKS kerberos credential of the requested uid using the first responding 
+AUKS daemon. This operation requires at least the \fBuser\fR privilege.
+
+.TP
+\fB\-D\fR
+dump all the AUKS kerberos credentials using the first responding AUKS daemon.
+This operation requires at least the \fBadmin\fR privilege.
+
+.TP
+\fB\-R once|loop\fR
+use AUKS commandline client as a credential renewer process. In \fBloop\fR mode,
+the process exits only when an error occured or the credential can no longer 
+be renewed. Used renewal mechanism is to first try to renew credential using 
+the first responding AUKS daemon and second to use kerberos KDC in case of 
+failure. In \fBonce\fR mode, the ticket is renewed once, only if needed, and 
+the program exits. This operation requires at least the \fBuser\fR privilege.
+
+.TP
+\fB\-u uid\fR
+specify the requested uid to use with get/remove requests
+
+.TP
+\fB\-C ccache\fR
+specify the input/output credential file to use with add/get requests
+
+
+.SH "ERRORS"
+.LP
+exit status is zero in case of success, not zero otherwise.
+
+.SH "ENVIRONMENT VARIABLES"
+.LP
+.TP
+\fBKRB5CCNAME\fR
+Like any kerberos client, kerberos credentials used during AUKS
+communications are stored into the default cache or the cache 
+pointed	to by this environment variable.
+
+.SH "COPYING"
+.LP
+Copyright  CEA/DAM/DIF (2009)
+.br
+
+.br
+This software is a computer program whose purpose is to simplify
+.br
+the addition of kerberos credential support in Batch applications.
+.br
+
+.br
+This software is governed by the CeCILL-C license under French law and
+.br
+abiding by the rules of distribution of free software.  You can  use, 
+.br
+modify and/ or redistribute the software under the terms of the 
+.br
+CeCILL-C license as circulated by CEA, CNRS and INRIA at the 
+.br
+following URL "http://www.cecill.info". 
+.br
+
+.br
+As a counterpart to the access to the source code and  rights to copy,
+.br
+modify and redistribute granted by the license, users are provided only
+.br
+with a limited warranty  and the software's author,  the holder of the
+.br
+economic rights,  and the successive licensors  have only  limited
+.br
+liability. 
+.br
+
+.br
+In this respect, the user's attention is drawn to the risks associated
+.br
+with loading,  using,  modifying and/or developing or reproducing the
+.br
+software by the user in light of its specific status of free software,
+.br
+that may mean  that it is complicated to manipulate,  and  that  also
+.br
+therefore means  that it is reserved for developers  and  experienced
+.br
+professionals having in-depth computer knowledge. Users are therefore
+.br
+encouraged to load and test the software's suitability as regards their
+.br
+requirements in conditions enabling the security of their systems 
+.br
+and/or data to be ensured and,  more generally, to use and operate 
+.br
+it in the same conditions as regards security. 
+.br
+
+.br
+The fact that you are presently reading this means that you have had
+.br
+knowledge of the CeCILL-C license and that you accept its terms.
+.br
+
+.SH "SEE ALSO"
+.BR auks.conf (5),
+.BR auksd (8)
+

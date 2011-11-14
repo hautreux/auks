@@ -1,0 +1,454 @@
+.TH "auks.conf" "March 2009" "Matthieu Hautreux" "auks.conf"
+
+
+.SH "NAME"
+auks.conf \- AUKS configuration file
+
+
+.SH "DESCRIPTION"
+.LP
+\fBauks.conf\fR is an ASCII configuration file which describes the 
+basic behaviors of AUKS components.
+.LP
+The configuration file is made of blocks describing the various 
+programs expected behaviors. A block is of the form :
+.LP
+type {
+.br
+
+.br
+	param1 = value ;
+.br
+	param2 = value ;
+.br
+	...
+.br
+}
+.br
+.LP
+Parameters meanings differ from block to an other. Four types of blocks
+are currently used :
+
+.TP
+\fBcommon\fR
+.br
+describes the global configuration elements.
+See \fBCOMMON CONFIGURATION\fR below for details.
+.TP
+\fBapi\fR
+.br
+describes configuration elements dedicated to the AUKS API.
+See \fBAPI CONFIGURATION\fR below for details.
+.TP
+\fBauksd\fR
+.br
+describes configuration elements dedicated to the AUKS daemon \fBauksd\fR.
+See \fBAUKSD CONFIGURATION\fR below for details.
+.TP
+\fBrenewer\fR
+.br
+describes configuration elements dedicated to credential renewal mechanisms.
+See \fBRENEWER CONFIGURATION\fR below for details.
+
+
+.SH "COMMON CONFIGURATION"
+.LP
+\fBcommon\fR configuration is in charge of describing the AUKS daemons 
+as well as the way they can be contacted.
+
+.TP
+\fBPrimaryHost\fR
+primary daemon host name. The default value is \fBlocalhost\fR.
+.TP
+\fBPrimaryAddress\fR
+primary daemon address. By default, \fBPrimaryHost\fR is used to get the 
+associated addresses.
+.TP
+\fBPrimaryPort\fR
+primary daemon TCP port. The default value is \fB12345\fR.
+.TP
+\fBPrimaryPrincipal\fR
+primary daemon kerberos principal. This value must be defined.
+.TP
+\fBSecondaryHost\fR
+secondary daemon host name. The default value is \fBlocalhost\fR.
+.TP
+\fBSecondaryAddress\fR
+secondary daemon address. By default, \fBSecondaryHost\fR is used to get the 
+associated addresses.
+.TP
+\fBSecondaryPort\fR
+secondary daemon TCP port. The default value is \fB12345\fR.
+.TP
+\fBSecondaryPrincipal\fR
+Secondary daemon kerberos principal. This value must be defined.
+.TP
+\fBNAT\fR
+if set to \fByes\fR, enables Network Address Translation support.
+When NAT is enabled, a dummy address is configured in client-server kerberos
+communications to prevent message source IP check failures.
+The default is \fBno\fR. Client and servers \fImust\fR share the same 
+configuration.
+.TP
+\fBRetries\fR
+specifies the number of retry that would be done in case of daemons 
+unavailabilities. The default is \fB3\fR. A retry correspond to an
+attempt to contact the primary daemon plus an attempt to contact 
+the secondary.
+.TP
+\fBTimeout\fR
+specifies the timeout in seconds when discussing with the daemons. 
+The default is \fB10\fR.
+.TP
+\fBDelay\fR
+specifies the delay in seconds between 2 retries. The default is \fB10\fR.
+
+
+.SH "API CONFIGURATION"
+.LP
+\fBapi\fR configuration is in charge of describing the API log and debug 
+behaviors. Any application using the AUKS API will log AUKS details according
+to the parameters described here. \fBauks\fR is an example of such a client.
+
+.TP
+\fBLogFile\fR
+specifies the file in which to log AUKS details.
+The default is \fB/dev/stdout\fR.
+.TP
+\fBLogLevel\fR
+specifies the level of verbosity to use. The default is \fB0\fR which 
+means no log message.
+.TP
+\fBDebugFile\fR
+specifies the file in which to put AUKS debug details.
+The default is \fB/dev/stdout\fR.
+.TP
+\fBDebugLevel\fR
+specifies the level of debug to use. The default is \fB0\fR which 
+means no debug message.
+
+
+.SH "AUKSD CONFIGURATION"
+.LP
+\fBauksd\fR configuration is in charge of describing the AUKS daemons behaviors.
+.LP
+A part of the daemons configuration is extracted from the \fBcommon\fR block.
+\fBPrimaryHostname\fR and \fBSecondaryHostname\fR are used by the application to
+determine execution host role.
+.LP
+Current version of \fBauksd\fR assumes that when the secondary daemon is started,
+the primary is stopped. Secondary daemon starts processing requests as soon as it
+starts. External Fail-Over mechanism must be used to ensure that only one daemon 
+is active at a time.
+.LP
+
+.TP
+\fBPrimaryKeytab\fR
+specifies the file in which is stored the primary daemon kerberos keytab.
+The default is \fB/etc/kb5.keytab\fR.
+.TP
+\fBSecondaryKeytab\fR
+specifies the file in which is stored the secondary daemon kerberos keytab.
+The default is \fB/etc/kb5.keytab\fR.
+.TP
+\fBCacheDir\fR
+specifies the directory in which the credentials are stored. This directory 
+should point to the same data for both primary and secondary daemons.
+The default is \fB/var/cache/auks\fR.
+.TP
+\fBACLFile\fR
+specifies the file in which are stored the authorization rules.
+The default is \fB/etc/auks/auks.acl\fR.
+.TP
+\fBQueueSize\fR
+specifies the default length of the queue used to store incoming requests. 
+The queue grows up automatically when needed by step of this size.
+The default is \fB50\fR.
+.TP
+\fBRepoSize\fR
+specifies the default size of the credentials repository. 
+The repository grows up automatically when needed by step of this size.
+The default is \fB500\fR.
+.TP
+\fBWorkers\fR
+specifies the number of threads that process incoming requests in parallel.
+The default is \fB10\fR.
+.TP
+\fBCleanDelay\fR
+specifies the delay in seconds between two clean stages. During a clean 
+stage, expired credentials are removed from repository.
+The default is \fB300\fR.
+.TP
+\fBReplayCache\fR
+if set to \fBno\fR, the kerberos security layer of the daemon will not detect
+replay attacks. This is a security issue but disabling this feature strongly 
+improve scalability. Do it only if your network can be considered as secured
+related to replay attacks. The default is \fByes\fR.
+.TP
+\fBLogFile\fR
+specifies the file in which to log AUKS daemon details. 
+The default is \fB/var/log/auksd.log\fR.
+.TP
+\fBLogLevel\fR
+specifies the level of verbosity to use. The default is \fB1\fR and only logs
+restart/reconfigure messages as well as statistics. Statistics are logged
+when the daemon is signaled with SIGUSR2.
+.TP
+\fBDebugFile\fR
+specifies the file in which to put AUKS daemon debug details.
+The default is \fB/var/log/auksd.log\fR.
+.TP
+\fBDebugLevel\fR
+specifies the level of debug to use. The default is \fB0\fR which 
+means no debug message.
+
+
+.SH "RENEWER CONFIGURATION"
+.LP
+\fBrenewer\fR configuration is in charge of describing the AUKS credential renewal
+mechanisms.
+.LP
+Renewal mechanims are used in \fBauksdrenewer\fR as well as in the 
+\fBauks_api_renew_cred\fR function of the AUKS API.
+.LP
+Current AUKS renewal mechanism is based on two parameters, \fBDelay\fR
+and \fBMinLifeTime\fR. Every \fBDelay\fR seconds, credentials lifetimes are 
+checked. If the remaining time before expiration is less than \fBMinlifetime\fR, 
+the credential is renewed using AUKS daemon or the Kerberos KDC in case of AUKS
+failure.
+.LP
+A ticket which lifetime is less than \fBMinlifetime\fR is not took into account
+by the mechanism.
+.LP
+.TP
+\fBDelay\fR
+.br
+delay in seconds between two renewal stages. The default is \fB60\fR.
+.TP
+.br
+\fBMinLifeTime\fR
+Minimal lifetime in seconds for a credential to be renewed by the AUKS mechanism.
+The default is \fB300\fR. This value is also used as the minimal amount of time 
+a crendential must be valid without becoming a renewal candidate.
+.LP
+The following parameters are only used by \fBauksdrenewer\fR.
+\fBauks_api_renew_cred\fR function of the AUKS API uses \fBapi\fR configuration.
+.TP
+\fBLogFile\fR
+specifies the file in which to log \fBauksdrenewer\fR details. 
+The default is \fB/var/log/auksdrenewer.log\fR.
+.TP
+\fBLogLevel\fR
+specifies the level of verbosity to use. The default is \fB1\fR.
+.TP
+\fBDebugFile\fR
+specifies the file in which to put \fBauksdrenewer\fR debug details.
+The default is \fB/var/log/auksdrenewer.log\fR.
+.TP
+\fBDebugLevel\fR
+specifies the level of debug to use. The default is \fB0\fR which 
+means no debug message.
+
+
+.SH "EXAMPLE"
+.LP
+common {
+.br
+
+.br
+ PrimaryHost        = "auks" ;
+.br
+ #PrimaryAddress    = "" ;
+.br
+ PrimaryPort        = 12345 ;
+.br
+ PrimaryPrincipal   = "host/auks.myrealm.org@MYREALM.ORG" ;
+.br
+
+.br
+ SecondaryHost      = "auks2" ;
+.br
+ #SecondaryAddress  = "" ;
+.br
+ SecondaryPort      = "12345" ;
+.br
+ SecondaryPrincipal = "host/auks2.myrealm.org@MYREALM.ORG" ;
+.br
+
+.br
+ NAT                = no ;
+.br
+
+.br
+ Retries            = 3 ;
+.br
+ Timeout            = 10 ;
+.br
+ Delay              = 3 ;
+.br
+
+.br
+}
+.br
+
+.br
+api {
+.br
+
+.br
+ LogFile            = "/tmp/auksapi.log" ;
+.br
+ LogLevel           = "0" ;
+.br
+
+.br
+ DebugFile          = "/tmp/auksapi.log" ;
+.br
+ DebugLevel         = "0" ;
+.br
+
+.br
+}
+.br
+
+.br
+auksd {
+.br
+
+.br
+ PrimaryKeytab      = "/etc/krb5.keytab" ;
+.br
+ SecondaryKeytab    = "/etc/krb5.keytab" ;
+.br
+
+.br
+ LogFile            = "/var/log/auksd.log" ;
+.br
+ LogLevel           = "1" ;
+.br
+ DebugFile          = "/var/log/auksd.log" ;
+.br
+ DebugLevel         = "0" ;
+.br
+
+.br
+ ACLFile            = "/etc/auks/auksd.acl" ;	
+.br
+ CacheDir           = "/var/cache/auks" ;
+.br
+ CleanDelay         = 300 ;
+.br
+
+.br
+ QueueSize          = 50 ;
+.br
+ RepoSize           = 500 ;
+.br
+ Workers            = 10 ;
+.br
+
+.br
+ ReplayCache        = yes ;
+.br
+
+.br
+}
+.br
+
+.br
+renewer {
+.br
+
+.br
+ LogFile            = "/var/log/auksdrenewer.log" ;
+.br
+ LogLevel           = "1" ;
+.br
+
+.br
+ DebugFile          = "/var/log/auksdrenewer.log" ;
+.br
+ DebugLevel         = "0" ;
+.br
+
+.br
+ Delay              = "60" ;
+.br
+
+.br
+ MinLifeTime        = "600" ;
+.br
+
+.br
+}
+.br
+
+
+.SH "COPYING"
+.LP
+Copyright  CEA/DAM/DIF (2009)
+.br
+
+.br
+This software is a computer program whose purpose is to simplify
+.br
+the addition of kerberos credential support in Batch applications.
+.br
+
+.br
+This software is governed by the CeCILL-C license under French law and
+.br
+abiding by the rules of distribution of free software.  You can  use, 
+.br
+modify and/ or redistribute the software under the terms of the 
+.br
+CeCILL-C license as circulated by CEA, CNRS and INRIA at the 
+.br
+following URL "http://www.cecill.info". 
+.br
+
+.br
+As a counterpart to the access to the source code and  rights to copy,
+.br
+modify and redistribute granted by the license, users are provided only
+.br
+with a limited warranty  and the software's author,  the holder of the
+.br
+economic rights,  and the successive licensors  have only  limited
+.br
+liability. 
+.br
+
+.br
+In this respect, the user's attention is drawn to the risks associated
+.br
+with loading,  using,  modifying and/or developing or reproducing the
+.br
+software by the user in light of its specific status of free software,
+.br
+that may mean  that it is complicated to manipulate,  and  that  also
+.br
+therefore means  that it is reserved for developers  and  experienced
+.br
+professionals having in-depth computer knowledge. Users are therefore
+.br
+encouraged to load and test the software's suitability as regards their
+.br
+requirements in conditions enabling the security of their systems 
+.br
+and/or data to be ensured and,  more generally, to use and operate 
+.br
+it in the same conditions as regards security. 
+.br
+
+.br
+The fact that you are presently reading this means that you have had
+.br
+knowledge of the CeCILL-C license and that you accept its terms.
+.br
+
+.SH "SEE ALSO"
+.BR auks (1),
+.BR auks.acl (5),
+.BR auksd (8),
+.BR auksdrenewer (8)

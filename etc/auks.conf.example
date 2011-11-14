@@ -1,0 +1,118 @@
+#------------------------------------------------------------------------------
+# auks client and server configuration file
+#------------------------------------------------------------------------------
+
+#-
+# Common client/server elements
+#-
+common {
+
+
+ # Primary daemon configuration
+ PrimaryHost        = 	"auks" ;
+ #PrimaryAddress     = 	"" ;
+ PrimaryPort        = 	12345 ;
+ PrimaryPrincipal   = 	"host/auks.myrealm.org@MYREALM.ORG" ;
+
+ # Secondary daemon configuration
+ SecondaryHost      = 	"auks2" ;
+ #SecondaryAddress   = 	"" ;
+ SecondaryPort      = 	"12345" ;
+ SecondaryPrincipal = 	"host/auks2.myrealm.org@MYREALM.ORG" ;
+
+ # Enable/Disable NAT traversal support (yes/no)
+ # this value must be the same on every nodes
+ NAT                =  	no ;
+
+ # max connection retries number
+ Retries            =	 3 ;
+
+ # connection timeout
+ Timeout            =   10 ;
+
+ # delay in seconds between retries
+ Delay              =    3 ;
+
+}
+
+#-
+# API only elements
+#-
+api {
+
+ # log file and level
+ LogFile            = 	"/tmp/auksapi.log" ;
+ LogLevel           = 	"0" ;
+
+ # optional debug file and level
+ DebugFile          = 	"/tmp/auksapi.log" ;
+ DebugLevel         = 	"0" ;
+
+}
+
+#-
+# Auks daemon only elements
+#-
+auksd {
+
+
+ # Primary daemon configuration
+ PrimaryKeytab      = 	"/etc/krb5.keytab" ;
+
+ # Secondary daemon configuration
+ SecondaryKeytab    = 	"/etc/krb5.keytab" ;
+
+ # log file and level
+ LogFile            = 	"/var/log/auksd.log" ;
+ LogLevel           = 	"1" ;
+
+ # optional debug file and level
+ DebugFile          = 	"/var/log/auksd.log" ;
+ DebugLevel         = 	"0" ;
+
+ # directory in which daemons store the creds
+ CacheDir           = 	"/var/cache/auks" ;
+
+ # ACL file for cred repo access authorization rules
+ ACLFile            = 	"/etc/auks/auksd.acl" ;	
+
+ # default size of incoming requests queue
+ # it grows up dynamically
+ QueueSize          =  	50 ;
+
+ # default repository size (number fo creds)
+ # it grows up dynamicaly
+ RepoSize           = 	500 ;
+
+ # number of workers for incoming request processing
+ Workers            =  	10 ;
+
+ # delay in seconds between 2 repository clean stages
+ CleanDelay         = 	300 ;
+
+ # use kerberos replay cache system (slow down)
+ ReplayCache        = 	yes ;
+
+}
+
+#-
+# Auksd renewer only elements
+#-
+renewer {
+
+ # log file and level
+ LogFile            =   "/var/log/auksdrenewer.log" ;
+ LogLevel           =   "1" ;
+
+ # optional debug file and level
+ DebugFile          =   "/var/log/auksdrenewer.log" ;
+ DebugLevel         =   "0" ;
+
+ # delay between two renew loops
+ Delay              = "60" ;
+
+ # Min Lifetime for credentials to be renewed
+ # This value is also used as the grace trigger to renew creds
+ MinLifeTime        = "600" ;
+
+}

@@ -1,0 +1,139 @@
+.TH "auksd" "March 2009" "Matthieu Hautreux" "auksd"
+
+.SH "NAME"
+auksd \- AUKS daemon serves add/get/remove/dump AUKS client requests
+
+.SH "SYNOPSIS"
+\fBauksd\fR [\fI-h\fR] [\fI-dv\fR] [\fI-f auks.conf\fR]
+
+.SH "DESCRIPTION"
+.LP
+\fBAUKS\fR (\fBA\fRside \fBU\fRtility for \fBK\fRerberos \fBS\fRupport)
+simplifies the use of a kerberized environment in batch system.
+An AUKS daemon is a kind of kerberos TGT repository where users can store 
+their credentials prior to launch batch jobs and administrators can get 
+them to execute jobs with coresponding kerberos identity.
+.LP
+Only one TGT is stored by user. TGTs are stored by uid. As a result, 
+credentials can only be stored for valid local users.
+A valid local user is defined as a kerberos user whose principal can be 
+translated to a valid local user on the system running the daemon.
+When a user asks to add a credential, an already existing  one is only 
+replaced if the proposed one is better in terms of durability.
+.LP
+Clients are authenticated using kerberos and authorized based on their 
+principal name using rules defined in the \fIauks.acl\fR ACL file.
+AUKS privileges are defined in this files by increasing capabilities 
+as follows :
+.TP
+\fBunknown\fR
+client authenticated using kerberos but not known to have any privilege
+.TP
+\fBguest\fR
+client authorized to add kerberos credential on its own name
+.TP
+\fBuser\fR
+client authorized to add/get/remove kerberos credentials that belong to him
+.TP
+\fBadmin\fR
+client authorized to add/get/remove kerberos credentials in the name of any users.
+client also authorized to dump all the available credentials.
+.LP
+The AUKS daemon doesn't manage credentials renewal. This is the purpose 
+of the \fBauksdrenewer\fR which must be run by an \fBadmin\fR AUKS user.
+.LP
+The AUKS daemon is by default launched in background. Increasing verbosity 
+on the command line can modify this behavior.
+.LP
+\fBauksd\fR can be launched at startup using the eponymous service.
+
+.SH "OPTIONS"
+.LP
+.TP
+\fB\-h\fR
+print this message
+.TP
+\fB\-v\fR
+increase verbosity output
+.TP
+\fB\-d\fR
+increase debug output
+.TP
+\fB\-f auks.conf\fR
+use \fIauks.conf\fR as the configuration file.
+The default is \fB/etc/auks/auks.conf\fR.
+
+.SH "ERRORS"
+.LP
+exit status is zero in case of success, not zero otherwise.
+
+.SH "COPYING"
+.LP
+Copyright  CEA/DAM/DIF (2009)
+.br
+
+.br
+This software is a computer program whose purpose is to simplify
+.br
+the addition of kerberos credential support in Batch applications.
+.br
+
+.br
+This software is governed by the CeCILL-C license under French law and
+.br
+abiding by the rules of distribution of free software.  You can  use, 
+.br
+modify and/ or redistribute the software under the terms of the 
+.br
+CeCILL-C license as circulated by CEA, CNRS and INRIA at the 
+.br
+following URL "http://www.cecill.info". 
+.br
+
+.br
+As a counterpart to the access to the source code and  rights to copy,
+.br
+modify and redistribute granted by the license, users are provided only
+.br
+with a limited warranty  and the software's author,  the holder of the
+.br
+economic rights,  and the successive licensors  have only  limited
+.br
+liability. 
+.br
+
+.br
+In this respect, the user's attention is drawn to the risks associated
+.br
+with loading,  using,  modifying and/or developing or reproducing the
+.br
+software by the user in light of its specific status of free software,
+.br
+that may mean  that it is complicated to manipulate,  and  that  also
+.br
+therefore means  that it is reserved for developers  and  experienced
+.br
+professionals having in-depth computer knowledge. Users are therefore
+.br
+encouraged to load and test the software's suitability as regards their
+.br
+requirements in conditions enabling the security of their systems 
+.br
+and/or data to be ensured and,  more generally, to use and operate 
+.br
+it in the same conditions as regards security. 
+.br
+
+.br
+The fact that you are presently reading this means that you have had
+.br
+knowledge of the CeCILL-C license and that you accept its terms.
+.br
+
+.SH "SEE ALSO"
+.BR auks (1),
+.BR auks.conf (5),
+.BR auks.acl (5),
+.BR auksd (8),
+.BR auksdrenewer (8),
+.BR aukspriv (8)

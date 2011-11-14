@@ -1,0 +1,65 @@
+10/07/2010 Matthieu Hautreux <matthieu.hautreux@cea.fr>
+	
+	* auks-0.4.0-1
+	* correct client/server connection timeout
+	* improve init service internals to prevent possible daemon hangup
+	* add minimum uid configuration param to auks slurm spank plugin
+	* remove memory leak workaround required by MIT kerberos version
+	  prior to 1.8 (use -DLIBKRB5_MEMORY_LEAK_WORKAROUND to activate
+	  this workaround)
+
+01/28/2010 Matthieu Hautreux <matthieu.hautreux@cea.fr>
+
+	* auks-0.3.8-1 official beta release
+	* slurm plugin: add the possibility to use credential
+	in successive spank plugins not just in the launched
+	tasks
+
+12/09/2009 Matthieu Hautreux <matthieu.hautreux@cea.fr>
+
+	* auks-0.3.7-1 official release
+
+12/07/2009 Matthieu Hautreux <matthieu.hautreux@cea.fr>
+
+	* auks-0.3.6-4
+	* slurm plugin: correct a bug when --auks is used in slurm
+	  without argument
+
+12/02/2009 Matthieu Hautreux <matthieu.hautreux@cea.fr>
+
+	* auks-0.3.6-3
+	* slurm plugin: enhance command line and conf file options
+	  (enable/disable)
+	* correct a bug in aukspriv that terminate the service if a
+	  temporary error prevent from talking with the KDC
+	* correct a bug preventing from getting a valid addressless ticket
+	  from an addressfull one
+
+10/28/2009 Matthieu Hautreux <matthieu.hautreux@cea.fr>
+
+	* auks-0.3.6-2
+	* correct a bug preventing from getting a valid addressless
+	ticket from an addressfull one (get a forwarded addressless ticket
+	instead of getting a renewed ticket with NULL addr)
+
+06/07/2009 Matthieu Hautreux <matthieu.hautreux@cea.fr>
+
+	* auks-0.3.6-1
+	* add external renewer support to slurm spank plugin
+
+03/27/2009 Matthieu Hautreux <matthieu.hautreux@cea.fr>
+
+	* auks-0.3.4
+	* add aukspriv scripted daemon and associated service
+	* add auks_api_renew_cred functionality
+
+03/26/2009 Matthieu Hautreux <matthieu.hautreux@cea.fr>
+
+	* auks-0.3.3
+	* auksdrenew daemon
+	* configuration file structure enhancement
+
+03/17/2009 Matthieu Hautreux <matthieu.hautreux@cea.fr>
+
+	* auks-0.3.2
+	* auksdrenew support creation

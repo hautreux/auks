@@ -1,0 +1,144 @@
+.TH "auks.so.8" "Jun 2009" "Matthieu Hautreux" "auks.so"
+
+.SH "NAME"
+auks.so \- AUKS SLURM spank plugin
+
+.SH "SYNOPSIS"
+optional|required	\fBauks.so\fR	[\fIconf=file.conf\fR] [\fBdefault=disabled\fR] [\fBspankstackcred=no\fR]
+
+\fB
+.SH "DESCRIPTION"
+
+.LP
+\fBauks.so\fR is a SLURM spank plugin that adds Kerberos credential support 
+to SLURM using \fBAUKS API\fR. This plugin is enabled using the SLURM SPANK 
+configuration file \fB/etc/slurm/plugstack.conf\fR according to the syntax 
+mentionned in the previous synopsis.
+
+.LP
+\fBauks.so\fR SPANK plugin adds a \fB--auks\fR options to SLURM 
+command line clients \fBsrun\fB, \fBsalloc\fR and \fBsbatch\fR.
+This mechanism can alternatively be activated setting the \fBSLURM_SPANK_AUKS\fR 
+environment variable to \fByes\fR.
+
+.LP
+Using \fBauks.so\fR, SLURM \fBclient commands\fR forwards the user kerberos 
+credential to the \fBAUKS\fR daemon and set \fBSLURM_SPANK_AUKS\fR to \fBdone\fR 
+prior to execute, allocate or submit.
+
+.LP
+\fBslurmstepd\fR, SLURM execution daemon, loading \fBauks.so\fR, checks that 
+\fBSLURM_SPANK_AUKS\fR is set to \fBdone\fR and get user's credential using 
+\fBAUKS API\fR.
+To perform this get operation, \fBslurmstepd\fR user, i.e. \fBroot\fR, must have 
+a valid kerberos credential in its environment. This can be enforced using 
+\fBaukspriv\fR. The credential must also correspond to a principal associated 
+with the \fBAUKS admin role\fR in the \fBauksd\fR ACL file \fBauks.acl\fR.
+
+.LP
+\fBslurmstepd\fR, during SPANK temporary privileges drop, launches a crendential
+renewer that is killed at the end of the step, prior credential removal.
+Renewal is attempted as long as the credential is valid, first using \fBAUKS\fR 
+daemons (requires that user principal is associated to \fBAUKS user role\fR), then 
+using \fBKerberos KDC(s)\fR if an error occured.
+
+.LP
+\fBKRB5CCNAME\fR environment variable is set in job step environment according to 
+the fetched credential enabling the user to access kerberized resources during 
+execution.
+
+
+.SH "OPTIONS"
+.LP
+.TP
+\fBconf=file.conf\fR
+use file.conf as the configuration file for AUKS API
+.LP
+.TP
+\fBdefault=disabled|enabled\fR
+when set to \fBenabled\fR, the plugin is active unless users explicitly 
+ask not to use it. The default is \fBdisabled\fR.
+.LP
+.TP
+\fBspankstackcred=no|yes\fR
+when set to \fByes\fR, \fBKRB5CCNAME\fR is set in the spank plugins stack
+environment too, thus allowing next spank plugins to leverage its usage.
+The default is \fBno\fR.
+.LP
+.TP
+\fBminimum_uid=uid\fR
+when set to a valid user numerical identifier \fBuid\fR, the plugin is not
+active for user having a numerical identifier lower than that value.
+The default is \fB0\fR, which allows every user on the system to use auks.
+
+.SH "COPYING"
+.LP
+Copyright  CEA/DAM/DIF (2009)
+.br
+
+.br
+This software is a computer program whose purpose is to simplify
+.br
+the addition of kerberos credential support in Batch applications.
+.br
+
+.br
+This software is governed by the CeCILL-C license under French law and
+.br
+abiding by the rules of distribution of free software.  You can  use, 
+.br
+modify and/ or redistribute the software under the terms of the 
+.br
+CeCILL-C license as circulated by CEA, CNRS and INRIA at the 
+.br
+following URL "http://www.cecill.info". 
+.br
+
+.br
+As a counterpart to the access to the source code and  rights to copy,
+.br
+modify and redistribute granted by the license, users are provided only
+.br
+with a limited warranty  and the software's author,  the holder of the
+.br
+economic rights,  and the successive licensors  have only  limited
+.br
+liability. 
+.br
+
+.br
+In this respect, the user's attention is drawn to the risks associated
+.br
+with loading,  using,  modifying and/or developing or reproducing the
+.br
+software by the user in light of its specific status of free software,
+.br
+that may mean  that it is complicated to manipulate,  and  that  also
+.br
+therefore means  that it is reserved for developers  and  experienced
+.br
+professionals having in-depth computer knowledge. Users are therefore
+.br
+encouraged to load and test the software's suitability as regards their
+.br
+requirements in conditions enabling the security of their systems 
+.br
+and/or data to be ensured and,  more generally, to use and operate 
+.br
+it in the same conditions as regards security. 
+.br
+
+.br
+The fact that you are presently reading this means that you have had
+.br
+knowledge of the CeCILL-C license and that you accept its terms.
+.br
+
+.SH "SEE ALSO"
+.BR spank (8),
+.BR auks (1),
+.BR auks.conf (5),
+.BR auksd (8),
+.BR auks.acl (5),
+.BR aukspriv (8)
+

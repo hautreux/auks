@@ -1,0 +1,37 @@
+#------------------------------------------------------------------------------
+# auks-0.3 daemon configuration file
+# (Generated using autotools)
+#------------------------------------------------------------------------------
+
+#-------------------------------------------------------------------------------
+# Any principals from realm REALM.A coming from any hosts are guests.
+# Guests can only add creds to an Auks repository
+#-------------------------------------------------------------------------------
+# rule {
+#         principal = ^[[:alnum:]]*@REALM.A$ ;
+#         host = * ;
+#         role = guest ;
+# }
+#-------------------------------------------------------------------------------
+
+#-------------------------------------------------------------------------------
+# Any principals from realm REALM.A coming from any hosts are users. 
+# Users can add/get/remove their own creds using an Auks repository
+#-------------------------------------------------------------------------------
+# rule {
+#         principal = ^[[:alnum:]]*@REALM.B$ ;
+#         host = * ;
+#         role = user ;
+# }
+#-------------------------------------------------------------------------------
+
+#-------------------------------------------------------------------------------
+# Any principals from realm REALM.C coming from any hosts are administrators. 
+# Administrators can add/get/remove any creds and get dumps of the repository
+#-------------------------------------------------------------------------------
+# rule {
+#         principal = ^[[:alnum:]]*@REALM.C$ ;
+#         host = * ;
+#         role = admin ;
+# }
+#-------------------------------------------------------------------------------

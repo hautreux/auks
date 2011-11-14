@@ -1,0 +1,148 @@
+.TH "auks.acl" "March 2009" "Matthieu Hautreux" "auks.acl"
+
+
+.SH "NAME"
+auks.acl \- AUKS daemons Access Control List
+
+
+.SH "DESCRIPTION"
+.LP
+\fBauks.acl\fR is an ASCII configuration file which describes the 
+ACL used by the AUKS daemons.
+.LP
+The configuration file is made of blocks describing rules. The block are
+processed sequentially until a valid one is found. At that point, the 
+associated role is used.
+.LP
+
+.SH "RULES CONFIGURATION"
+.LP
+Rules are blocks of three parameters like in the following example :
+.LP
+rule {
+.br
+	principal = value ;
+.br
+	host = value ;
+.br
+	role = value ;
+.br
+}
+.br
+
+.TP
+\fBprincipal\fR
+the principal field is a \fBPOSIX Extended Regular Expression\fR describing 
+which principals are associated to the rule.
+.TP
+\fBhost\fR
+this field gives the DNS name or the address of the host from which the rule 
+is valid. The wilcard \fB*\fR means any host.
+.TP
+\fBrole\fR
+this parameter gives the rule's associated role. Valid values are \fBguest\fR,
+\fBuser\fR and \fBadmin\fR.
+
+
+.SH "EXAMPLES"
+.LP
+.br
+\fBrule\fR {
+.br
+         \fBprincipal\fR = ^[[:alnum:]]*@REALM.A$ ;
+.br
+         \fBhost\fR = * ;
+.br
+         \fBrole\fR = user ;
+.br
+}
+.br
+\fBrule\fR {
+.br
+         \fBprincipal\fR = ^admin/[[:alnum:]]*@REALM.A$ ;
+.br
+         \fBhost\fR = * ;
+.br
+         \fBrole\fR = admin ;
+.br
+}
+.br
+\fBrule\fR {
+.br
+         \fBprincipal\fR = ^[[:alnum:]]*@REALM.B$ ;
+.br
+         \fBhost\fR = * ;
+.br
+         \fBrole\fR = guest ;
+.br
+}
+.br
+
+.SH "COPYING"
+.LP
+Copyright  CEA/DAM/DIF (2009)
+.br
+
+.br
+This software is a computer program whose purpose is to simplify
+.br
+the addition of kerberos credential support in Batch applications.
+.br
+
+.br
+This software is governed by the CeCILL-C license under French law and
+.br
+abiding by the rules of distribution of free software.  You can  use, 
+.br
+modify and/ or redistribute the software under the terms of the 
+.br
+CeCILL-C license as circulated by CEA, CNRS and INRIA at the 
+.br
+following URL "http://www.cecill.info". 
+.br
+
+.br
+As a counterpart to the access to the source code and  rights to copy,
+.br
+modify and redistribute granted by the license, users are provided only
+.br
+with a limited warranty  and the software's author,  the holder of the
+.br
+economic rights,  and the successive licensors  have only  limited
+.br
+liability. 
+.br
+
+.br
+In this respect, the user's attention is drawn to the risks associated
+.br
+with loading,  using,  modifying and/or developing or reproducing the
+.br
+software by the user in light of its specific status of free software,
+.br
+that may mean  that it is complicated to manipulate,  and  that  also
+.br
+therefore means  that it is reserved for developers  and  experienced
+.br
+professionals having in-depth computer knowledge. Users are therefore
+.br
+encouraged to load and test the software's suitability as regards their
+.br
+requirements in conditions enabling the security of their systems 
+.br
+and/or data to be ensured and,  more generally, to use and operate 
+.br
+it in the same conditions as regards security. 
+.br
+
+.br
+The fact that you are presently reading this means that you have had
+.br
+knowledge of the CeCILL-C license and that you accept its terms.
+.br
+
+.SH "SEE ALSO"
+.BR auks (1),
+.BR auks.conf (5),
+.BR auksd (8),
+.BR regcomp (3)

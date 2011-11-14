@@ -1,0 +1,246 @@
+#!/bin/bash
+#----------------------------------------------------------------------------
+#
+# This script get a krb5 credential using a keytab at a specified rate and 
+# for a specified user and lifetime
+#
+# The credential cache is of the form "/tmp/krb5cc_%uid and can be
+# appended with a given string
+#
+#-------------------------------------------------------------------------------
+#
+# The following environment variables can be used to modify the 
+# default behavior :
+#
+#  AUKS_PRIV_USER          : set the user to get credential for
+#                            default value is root
+#
+#  AUKS_PRIV_KEYTAB        : set the keytab file to use
+#                            default value is /etc/krb5.keytab
+#
+#  AUKS_PRIV_PRINC         : set the krb5 principal name
+#                            default value is the first princ found in 
+#                            the keytab
+#
+#  AUKS_PRIV_CCACHE_APPEND : set the string to append to ccache pattern
+#                            default value is no string to append
+#
+#  AUKS_PRIV_LIFETIME      : set the credential lifetime in seconds
+#                            default value is 36000 (10h)
+#
+#  AUKS_PRIV_RENEW_INT     : set the time to wait between two gets
+#                            default value is 35000
+#
+#  AUKS_PRIV_ERROR_INT     : set the time to wait between two gets
+#                            when an error occured. default value is 60
+#
+#  AUKS_PRIV_SYSLOG_PRIO   : set the syslog facility to use for log information
+#                            default value is local3.notice
+#                            a "none" value means logs on stdout
+#
+#----------------------------------------------------------------------------
+# Copyright  CEA/DAM/DIF (2009)
+#
+# Written by Matthieu Hautreux <matthieu.hautreux@cea.fr>
+# 
+# This software is a computer program whose purpose is to simplify
+# the addition of kerberos credential support in Batch applications.
+#
+# This software is governed by the CeCILL-C license under French law and
+# abiding by the rules of distribution of free software.  You can  use, 
+# modify and/ or redistribute the software under the terms of the CeCILL-C
+# license as circulated by CEA, CNRS and INRIA at the following URL
+# "http://www.cecill.info". 
+# 
+# As a counterpart to the access to the source code and  rights to copy,
+# modify and redistribute granted by the license, users are provided only
+# with a limited warranty  and the software's author,  the holder of the
+# economic rights,  and the successive licensors  have only  limited
+# liability. 
+# 
+# In this respect, the user's attention is drawn to the risks associated
+# with loading,  using,  modifying and/or developing or reproducing the
+# software by the user in light of its specific status of free software,
+# that may mean  that it is complicated to manipulate,  and  that  also
+# therefore means  that it is reserved for developers  and  experienced
+# professionals having in-depth computer knowledge. Users are therefore
+# encouraged to load and test the software's suitability as regards their
+# requirements in conditions enabling the security of their systems and/or 
+# data to be ensured and,  more generally, to use and operate it in the 
+# same conditions as regards security. 
+# 
+# The fact that you are presently reading this means that you have had
+# knowledge of the CeCILL-C license and that you accept its terms.
+#----------------------------------------------------------------------------
+# Copyright  CEA/DAM/DIF (2009)
+# 
+# Ecrit par Matthieu Hautreux <matthieu.hautreux@cea.fr>
+#
+# Ce logiciel est un programme informatique servant à faciliter l'ajout
+# du support des tickets Kerberos aux applications Batch.
+# 
+# Ce logiciel est régi par la licence CeCILL-C soumise au droit français et
+# respectant les principes de diffusion des logiciels libres. Vous pouvez
+# utiliser, modifier et/ou redistribuer ce programme sous les conditions
+# de la licence CeCILL-C telle que diffusée par le CEA, le CNRS et l'INRIA 
+# sur le site "http://www.cecill.info".
+# 
+# En contrepartie de l'accessibilité au code source et des droits de copie,
+# de modification et de redistribution accordés par cette licence, il n'est
+# offert aux utilisateurs qu'une garantie limitée.  Pour les mêmes raisons,
+# seule une responsabilité restreinte pèse sur l'auteur du programme,  le
+# titulaire des droits patrimoniaux et les concédants successifs.
+# 
+# A cet égard  l'attention de l'utilisateur est attirée sur les risques
+# associés au chargement,  à l'utilisation,  à la modification et/ou au
+# développement et à la reproduction du logiciel par l'utilisateur étant 
+# donné sa spécificité de logiciel libre, qui peut le rendre complexe à 
+# manipuler et qui le réserve donc à des développeurs et des professionnels
+# avertis possédant  des  connaissances  informatiques approfondies.  Les
+# utilisateurs sont donc invités à charger  et  tester  l'adéquation  du
+# logiciel à leurs besoins dans des conditions permettant d'assurer la
+# sécurité de leurs systèmes et ou de leurs données et, plus généralement, 
+# à l'utiliser et l'exploiter dans les mêmes conditions de sécurité. 
+# 
+# Le fait que vous puissiez accéder à cet en-tête signifie que vous avez 
+# pris connaissance de la licence CeCILL-C, et que vous en avez accepté les
+# termes.
+################################################################################
+
+
+################################################################################
+# logger function
+#-------------------------------------------------------------------------------
+function mylogger {
+
+    if [[ ${AUKS_PRIV_SYSLOG_PRIO} == "none" ]]
+	then
+	echo "$(date) [INFO1] aukspriv: " $@
+    else
+	logger -i -p ${AUKS_PRIV_SYSLOG_PRIO} -t "aukspriv" $@
+    fi
+
+}
+################################################################################
+
+
+################################################################################
+# set default value if not already set
+#-------------------------------------------------------------------------------
+export PATH=$PATH:/usr/kerberos/bin
+#-------------------------------------------------------------------------------
+if [[ -z ${AUKS_PRIV_USER} ]]
+    then
+    AUKS_PRIV_USER=root
+fi
+if [[ -z ${AUKS_PRIV_KEYTAB} ]]
+    then
+    AUKS_PRIV_KEYTAB=/etc/krb5.keytab
+fi
+if [[ -z ${AUKS_PRIV_PRINC} ]]
+    then
+    AUKS_PRIV_PRINC=$(klist -kt ${AUKS_PRIV_KEYTAB} \
+	| tail -n1 | awk '//{print $NF}')
+fi
+if [[ -z ${AUKS_PRIV_LIFETIME} ]]
+    then
+    AUKS_PRIV_LIFETIME=36000
+fi
+if [[ -z ${AUKS_PRIV_RENEW_INT} ]]
+    then
+    AUKS_PRIV_RENEW_INT=35000
+fi
+if [[ -z ${AUKS_PRIV_ERROR_INT} ]]
+    then
+    AUKS_PRIV_ERROR_INT=60
+fi
+if [[ -z ${AUKS_PRIV_SYSLOG_PRIO} ]]
+    then
+    AUKS_PRIV_SYSLOG_PRIO=local3.notice
+fi
+################################################################################
+
+
+################################################################################
+# main function
+#-------------------------------------------------------------------------------
+kinit_cmd=kinit
+LOGGER=mylogger
+#-------------------------------------------------------------------------------
+if [[ $1 == "-h" ]]
+    then
+    echo -e "Usage: $(basename $0) [-h|-v]\n\n\
+	\t-h\t\tprint this message\n\
+	\t-v\t\tlog on stdout instead of syslog\n"
+    exit 0
+fi
+if [[ $1 == "-v" ]]
+    then
+    AUKS_PRIV_SYSLOG_PRIO=none
+else
+    if [[ ${AUKS_PRIV_DONE} != "yes" ]]
+	then
+	export AUKS_PRIV_DONE=yes
+	$0 $@ >/dev/null 2>&1 &
+	exit 0
+    fi
+fi
+if [[ -n ${AUKS_PRIV_USER} ]] && \
+    [[ -n ${AUKS_PRIV_KEYTAB} ]] && \
+    [[ -n ${AUKS_PRIV_PRINC} ]] && \
+    [[ -n ${AUKS_PRIV_LIFETIME} ]] && \
+    [[ -n ${AUKS_PRIV_RENEW_INT} ]]
+    then
+
+    while [ 1 -eq 1 ]
+      do
+    
+      ccache="/tmp/krb5cc_$(id -u ${AUKS_PRIV_USER})${AUKS_PRIV_CCACHE_APPEND}"
+
+
+      touch ${ccache} 2>/dev/null
+      if [ $? -ne 0 ]
+	  then
+	  ${LOGGER} "unable to touch ccache"
+	  exit 1
+      fi
+      
+      chmod 0600 ${ccache} 2>/dev/null
+      if [ $? -ne 0 ]
+	  then
+	  ${LOGGER} "unable to set ccache mode to 0600"
+	  exit 1
+      fi
+      
+      chown ${AUKS_PRIV_USER} ${ccache} 2>/dev/null
+      if [ $? -ne 0 ]
+	  then
+	  ${LOGGER} "unable to set ccache user to ${AUKS_PRIV_USER}"
+	  exit 1
+      fi
+      
+      
+      ERROR=$(${kinit_cmd} -l ${AUKS_PRIV_LIFETIME} -c ${ccache} \
+	  -kt ${AUKS_PRIV_KEYTAB} ${AUKS_PRIV_PRINC} 2>&1 >/dev/null)
+      if [ $? -ne 0 ]
+	  then
+	  ${LOGGER} "unable to get ccache for ${AUKS_PRIV_PRINC} using \
+	      ktfile ${AUKS_PRIV_KEYTAB} : ${ERROR}"
+	  sleep ${AUKS_PRIV_ERROR_INT}
+	  continue
+      else
+	  ${LOGGER} "ccache build for ${AUKS_PRIV_PRINC} using \
+	      ${AUKS_PRIV_KEYTAB}"
+      fi
+      
+      sleep ${AUKS_PRIV_RENEW_INT}
+      
+    done
+
+else
+
+    ${LOGGER} "all required variables are not defined"
+    exit 255
+
+fi
+################################################################################
