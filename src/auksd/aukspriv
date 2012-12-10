@@ -34,6 +34,9 @@
 #  AUKS_PRIV_ERROR_INT     : set the time to wait between two gets
 #                            when an error occured. default value is 60
 #
+#  AUKS_PRIV_KINIT_TIMEOUT : set the timeout in seconds used while calling 
+#                            each kinit command. default value is 10
+#
 #  AUKS_PRIV_SYSLOG_PRIO   : set the syslog facility to use for log information
 #                            default value is local3.notice
 #                            a "none" value means logs on stdout
@@ -154,6 +157,10 @@ if [[ -z ${AUKS_PRIV_ERROR_INT} ]]
     then
     AUKS_PRIV_ERROR_INT=60
 fi
+if [[ -z ${AUKS_PRIV_KINIT_TIMEOUT} ]]
+    then
+    AUKS_PRIV_KINIT_TIMEOUT=10
+fi
 if [[ -z ${AUKS_PRIV_SYSLOG_PRIO} ]]
     then
     AUKS_PRIV_SYSLOG_PRIO=local3.notice
@@ -164,6 +171,7 @@ fi
 ################################################################################
 # main function
 #-------------------------------------------------------------------------------
+timeout_cmd=timeout
 kinit_cmd=kinit
 LOGGER=mylogger
 #-------------------------------------------------------------------------------
@@ -189,7 +197,8 @@ if [[ -n ${AUKS_PRIV_USER} ]] && \
     [[ -n ${AUKS_PRIV_KEYTAB} ]] && \
     [[ -n ${AUKS_PRIV_PRINC} ]] && \
     [[ -n ${AUKS_PRIV_LIFETIME} ]] && \
-    [[ -n ${AUKS_PRIV_RENEW_INT} ]]
+    [[ -n ${AUKS_PRIV_RENEW_INT} ]] && \
+    [[ -n ${AUKS_PRIV_KINIT_TIMEOUT} ]]
     then
 
     while [ 1 -eq 1 ]
@@ -219,8 +228,7 @@ if [[ -n ${AUKS_PRIV_USER} ]] && \
 	  exit 1
       fi
       
-      
-      ERROR=$(${kinit_cmd} -l ${AUKS_PRIV_LIFETIME} -c ${ccache} \
+      ERROR=$(${timeout_cmd} -s9 ${AUKS_PRIV_KINIT_TIMEOUT} ${kinit_cmd} -l ${AUKS_PRIV_LIFETIME} -c ${ccache} \
 	  -kt ${AUKS_PRIV_KEYTAB} ${AUKS_PRIV_PRINC} 2>&1 >/dev/null)
       if [ $? -ne 0 ]
 	  then
