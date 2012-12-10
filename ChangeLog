@@ -1,6 +1,9 @@
 auks-0.4.1 (ongoing)
 	* aukspriv: add kinit timeout logic
 	* auks: automatically inhibate auks support when no ccache available
+	* auks SLURM Spank plugin: add hostcredcache= conf pragma to specify
+	  a particular credential cache for the slurmd actions (based on a 
+	  patch from Nacho Barrientos, CERN)
 
 10/07/2010 Matthieu Hautreux <matthieu.hautreux@cea.fr>
 	

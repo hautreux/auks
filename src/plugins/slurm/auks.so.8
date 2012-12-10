@@ -32,7 +32,11 @@ prior to execute, allocate or submit.
 \fBAUKS API\fR.
 To perform this get operation, \fBslurmstepd\fR user, i.e. \fBroot\fR, must have 
 a valid kerberos credential in its environment. This can be enforced using 
-\fBaukspriv\fR. The credential must also correspond to a principal associated 
+\fBaukspriv\fR.
+The \fBhostcredcache=\fR option can be used to specify a particular credential
+cache file to be used instead of the default one (either the content of
+\fBKRB5CCNAME\fB or /tmp/krb5cc_0 in case this EV is not defined).
+The credential must also correspond to a principal associated 
 with the \fBAUKS admin role\fR in the \fBauksd\fR ACL file \fBauks.acl\fR.
 
 .LP
@@ -70,6 +74,12 @@ The default is \fBno\fR.
 when set to a valid user numerical identifier \fBuid\fR, the plugin is not
 active for user having a numerical identifier lower than that value.
 The default is \fB0\fR, which allows every user on the system to use auks.
+.LP
+.TP
+\fBhostcredcache=FILE:uri\fR
+When set to a valid KRB5CCNAME entry, the privileged slurmstepd sections of
+the plugin will use the content of this credential cache to secure auks
+admin requests.
 
 .SH "COPYING"
 .LP

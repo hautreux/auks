@@ -118,6 +118,8 @@ static char auks_credcache[CREDCACHE_MAXLENGTH];
 
 static char* auks_conf_file = NULL;
 
+static char* auks_hostcredcache_file = NULL;
+
 static int auks_mode = AUKS_MODE_DISABLED;
 
 /* enable/disable acquired ticket access to next spank plugins in the stack */
@@ -381,6 +383,9 @@ spank_auks_remote_init (spank_t sp, int ac, char *av[])
 	int fstatus;
 	auks_engine_t engine;
 	
+	char *p;
+	char *prev_krb5ccname = NULL;
+
 	static uint32_t jobid;
 	uid_t uid;
 	gid_t gid;
@@ -446,6 +451,15 @@ spank_auks_remote_init (spank_t sp, int ac, char *av[])
 	}
 	else
 		close(fstatus);
+
+	/* force KRB5CCNAME's value if the user wants so */
+	if (auks_hostcredcache_file != NULL) {
+		p = getenv("KRB5CCNAME");
+		if ( p != NULL ) {
+			prev_krb5ccname = strdup(p);
+		}
+		setenv("KRB5CCNAME", auks_hostcredcache_file, 1);
+	}
 	
 	/* initialize auks API */
 	fstatus = auks_api_init(&engine,auks_conf_file);
@@ -479,6 +493,16 @@ spank_auks_remote_init (spank_t sp, int ac, char *av[])
 		xerror("unable to set KRB5CCNAME env var");
 	}
 
+	/* remove forced KRB5CCNAME's value if necessary */
+	if (auks_hostcredcache_file != NULL) {
+		if ( prev_krb5ccname != NULL ) {
+			setenv("KRB5CCNAME",prev_krb5ccname,1);
+			free(prev_krb5ccname);
+		} else {
+			unsetenv("KRB5CCNAME");
+		}
+	}
+
 	/* if required by the configuration, also put the cred cache name */
 	/* in the spank plugstack environment */
 	if ( auks_spankstack ) {
@@ -505,6 +529,10 @@ spank_auks_remote_exit (spank_t sp, int ac, char **av)
 	/* free auks conf file if needed */
 	if ( auks_conf_file != NULL )
 		free(auks_conf_file);
+
+	/* free credcache file name if needed */
+	if ( auks_hostcredcache_file != NULL )
+		free(auks_hostcredcache_file);
 
 	/* now only process in remote mode */
 	if (!spank_remote (sp))
@@ -676,6 +704,12 @@ _parse_plugstack_conf (spank_t sp, int ac, char *av[])
 				xerror ("ignoring bad value %s for parameter ",
 					"minimum_uid",av[i]+12);
 			}
+		}
+		else if ( strncmp(elt,"hostcredcache=",14) == 0 ) {
+			auks_hostcredcache_file = strdup(elt+14);
+			if ( auks_hostcredcache_file == NULL )
+				xerror ("unable to dup hostcredcache "
+					"parameter '%s'",av[i]+14);
 		}
 	}
 	
