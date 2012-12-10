@@ -1,6 +1,6 @@
 Summary: Aside Utility for Kerberos Support
 Name: auks
-Version: 0.4.0
+Version: 0.4.1
 Release: 1
 License: CeCILL-C License
 Group: System Environment/Base
@@ -130,7 +130,8 @@ if [ ! -d /var/cache/auks ]; then
 fi
 
 %changelog
-* Thu Oct 07 2010  Matthieu Hautreux <matthieu.hautreux@cea.fr> - 0.4.0-1
+* Mon Dec 10 2012 Matthieu Hautreux <matthieu.hautreux@cea.fr> - 0.4.1-1
+* Thu Oct 07 2010 Matthieu Hautreux <matthieu.hautreux@cea.fr> - 0.4.0-1
 * Wed Apr  1 2009 Matthieu Hautreux <matthieu.hautreux@cea.fr> - 0.3.5-1
 * Fri Mar 27 2009 Matthieu Hautreux <matthieu.hautreux@cea.fr> - 0.3.4-1
 * Thu Mar 26 2009 Matthieu Hautreux <matthieu.hautreux@cea.fr> - 0.3.3-1
