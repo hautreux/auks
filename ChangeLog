@@ -1,5 +1,6 @@
-auks-0.4.1
+auks-0.4.1 (ongoing)
 	* aukspriv: add kinit timeout logic
+	* auks: automatically inhibate auks support when no ccache available
 
 10/07/2010 Matthieu Hautreux <matthieu.hautreux@cea.fr>
 	
