@@ -251,10 +251,10 @@ xlibrary_free_contents(xlibrary_t* library){
   pthread_mutex_destroy(&(library->mutex));
 
   /* free reference freelist contents */
-  fstatus=xfreelist_free_contents(&(library->ref_freelist));
+  xfreelist_free_contents(&(library->ref_freelist));
 
   /* free object freelist contents */
-  fstatus=xfreelist_free_contents(&(library->obj_freelist));
+  xfreelist_free_contents(&(library->obj_freelist));
   
   fstatus=XSUCCESS;
 
@@ -764,11 +764,11 @@ _count_item(const void* node,const VISIT method,const int depth){
 void
 _update_index(const void* node,const VISIT method,const int depth){
 
-  xfreelist_item_t* item;
-  xlibrary_item_t* litem;
-  xlibrary_t* library;
-
   if(method==leaf || method==postorder){
+
+    xfreelist_item_t* item;
+    xlibrary_item_t* litem;
+    xlibrary_t* library;
 
     item=*(xfreelist_item_t**)node;
     litem=(xlibrary_item_t*)item->data;
