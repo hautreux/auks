@@ -841,7 +841,7 @@ auks_krb5_cred_renew_buffer(char *in_buf,size_t in_buf_len,
 	*pout_buf_len = length;
 	auks_log("credential successfully stored in output buffer");
 	fstatus = AUKS_SUCCESS ;
-	
+
 	auks_log("in length : %u | out length : %u",
 		 in_buf_len,
 		 p_outbuf->length);
@@ -850,7 +850,6 @@ mk_exit:
 
 renew_exit:
 	krb5_free_creds(context,p_cred_out);
-	fstatus = AUKS_SUCCESS ;
 
 cred_exit:
 	krb5_free_cred_contents(context,&renew_cred);
@@ -1010,7 +1009,6 @@ mk_exit:
 
 fwd_exit:
 	krb5_free_creds(context,p_cred_out);
-	fstatus = AUKS_SUCCESS ;
 
 cred_exit:
 	krb5_free_cred_contents(context,&fwd_cred);

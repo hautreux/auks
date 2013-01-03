@@ -93,7 +93,7 @@ int
 auks_message_init(auks_message_t * msg,int type,
 		  char * buffer,size_t length)
 {
-	int fstatus = AUKS_ERROR ;
+	int fstatus;
 
 	msg->type = type;
 
@@ -123,7 +123,7 @@ exit:
 int
 auks_message_free_contents(auks_message_t * msg)
 {
-	int fstatus = AUKS_ERROR ;
+	int fstatus;
 
 	msg->type = AUKS_PING_REQUEST;
 
@@ -163,7 +163,7 @@ int
 auks_message_load(auks_message_t * msg,char *buffer,
 		  size_t size)
 {
-	int fstatus = AUKS_ERROR ;
+	int fstatus;
 	
 	fstatus = auks_buffer_load(&msg->buffer,buffer,size);
 	if ( fstatus != AUKS_SUCCESS )
@@ -206,7 +206,7 @@ int auks_message_pack_int(auks_message_t * msg,int i)
 
 int auks_message_unpack_int(auks_message_t * msg,int * i)
 {
-	int fstatus = AUKS_ERROR ;
+	int fstatus;
 
 	fstatus = auks_buffer_unpack_int(&msg->buffer,i);
 
@@ -224,7 +224,7 @@ int auks_message_pack_uid(auks_message_t * msg,uid_t u)
 
 int auks_message_unpack_uid(auks_message_t * msg,uid_t * u)
 {
-	int fstatus = AUKS_ERROR ;
+	int fstatus;
 
 	fstatus = auks_buffer_unpack_uid(&msg->buffer,u);
 

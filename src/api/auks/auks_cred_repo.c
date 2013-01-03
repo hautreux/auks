@@ -112,7 +112,7 @@ int
 auks_cred_repo_auks_credfile(auks_cred_repo_t * cr,uid_t uid,
 			     char* filename,size_t max_length)
 {
-	int fstatus = AUKS_ERROR ;
+	int fstatus;
 
 	fstatus = snprintf(filename, max_length,
 			   AUKS_CRED_CACHE_FILE_PATTERN,cr->cachedir, uid);
@@ -132,7 +132,7 @@ int
 auks_cred_repo_renewer_credfile(auks_cred_repo_t * cr,int id,
 				char* filename,size_t max_length)
 {
-	int fstatus = AUKS_ERROR ;
+	int fstatus;
 	
 	fstatus = snprintf(filename, max_length,
 			   "%s/krb5cc_renewer_%d",cr->cachedir,id);
@@ -231,7 +231,7 @@ exit:
 int
 auks_cred_repo_free_contents(auks_cred_repo_t * cr)
 {
-	int fstatus = AUKS_ERROR ;
+	int fstatus;
 
 	/* destroy the library */
 	xlibrary_free_contents(&(cr->library));
@@ -256,7 +256,7 @@ auks_cred_repo_free_contents(auks_cred_repo_t * cr)
 int
 auks_cred_repo_lock(auks_cred_repo_t * cr)
 {
-	int fstatus = AUKS_ERROR ;
+	int fstatus;
 	
 	fstatus = pthread_mutex_lock(&(cr->mutex));
 	if (fstatus) {
@@ -273,7 +273,7 @@ auks_cred_repo_lock(auks_cred_repo_t * cr)
 int
 auks_cred_repo_unlock(auks_cred_repo_t * cr)
 {
-	int fstatus = AUKS_ERROR ;
+	int fstatus;
 
 	fstatus = pthread_mutex_unlock(&(cr->mutex));
 	if (fstatus) {
@@ -290,7 +290,7 @@ auks_cred_repo_unlock(auks_cred_repo_t * cr)
 int
 auks_cred_repo_add(auks_cred_repo_t * cr, auks_cred_t * cred)
 {
-	int fstatus = AUKS_ERROR;
+	int fstatus;
 
 	/* lock repo */
 	fstatus = pthread_mutex_lock(&(cr->mutex));
@@ -315,7 +315,7 @@ auks_cred_repo_add(auks_cred_repo_t * cr, auks_cred_t * cred)
 int
 auks_cred_repo_get(auks_cred_repo_t * cr, uid_t uid, auks_cred_t * cred)
 {
-	int fstatus = AUKS_ERROR;
+	int fstatus;
 
 	/* lock repo */
 	fstatus = pthread_mutex_lock(&(cr->mutex));
@@ -341,7 +341,7 @@ auks_cred_repo_get(auks_cred_repo_t * cr, uid_t uid, auks_cred_t * cred)
 int
 auks_cred_repo_remove(auks_cred_repo_t * cr, uid_t uid)
 {
-	int fstatus = AUKS_ERROR;
+	int fstatus;
 
 	/* lock repo */
 	fstatus = pthread_mutex_lock(&(cr->mutex));
@@ -386,7 +386,7 @@ auks_cred_repo_pack(auks_cred_repo_t * cr,auks_message_t* msg)
 int
 auks_cred_repo_clean(auks_cred_repo_t * cr,int* pnb)
 {
-	int fstatus = AUKS_ERROR ;
+	int fstatus;
 
 	/* lock repository */
 	fstatus = auks_cred_repo_lock(cr);
@@ -404,7 +404,7 @@ auks_cred_repo_clean(auks_cred_repo_t * cr,int* pnb)
 int
 auks_cred_repo_add_nolock(auks_cred_repo_t * cr, auks_cred_t * cred)
 {
-	int fstatus = AUKS_ERROR;
+	int fstatus;
 
 	uid_t uid;
 	char uid_str[10];
@@ -488,7 +488,7 @@ exit:
 int
 auks_cred_repo_get_nolock(auks_cred_repo_t * cr,uid_t uid, auks_cred_t * cred)
 {
-	int fstatus = AUKS_ERROR;
+	int fstatus;
 	
 	char uid_str[10];
 	
@@ -689,7 +689,7 @@ exit:
 int
 auks_cred_repo_clean_nolock(auks_cred_repo_t * cr,int* pnb)
 {
-	int fstatus = AUKS_ERROR ;
+	int fstatus;
 
 	auks_cred_t cred;
 	int i;
@@ -755,7 +755,7 @@ auks_cred_repo_clean_nolock(auks_cred_repo_t * cr,int* pnb)
 int
 auks_cred_repo_update_index_nolock(auks_cred_repo_t * cr)
 {
-	int fstatus = AUKS_ERROR ;
+	int fstatus;
 
 	/* update repository index */
 	fstatus = xlibrary_update_index(&(cr->library));

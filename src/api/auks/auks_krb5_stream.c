@@ -208,7 +208,7 @@ auks_krb5_stream_clnt_init(auks_krb5_stream_t * kstream, int stream,
 			   char *principal, char *ccache, int flags)
 {
 
-	int fstatus = AUKS_ERROR ;
+	int fstatus;
 
 	krb5_error_code kstatus;
 	
@@ -279,7 +279,7 @@ auks_krb5_stream_srv_init(auks_krb5_stream_t * kstream, int stream,
 			  char *principal, char *keytab,int flags)
 {
 
-	int fstatus = AUKS_SUCCESS ;
+	int fstatus;
 
 	krb5_error_code kstatus;
 
@@ -345,7 +345,7 @@ int
 auks_krb5_stream_authenticate(auks_krb5_stream_t * kstream,
 			      char *remote_principal)
 {
-	int fstatus = AUKS_ERROR ;
+	int fstatus;
 
 	krb5_error_code kstatus;
 	krb5_address klocal_addr;
@@ -517,7 +517,7 @@ int
 auks_krb5_stream_get_lprinc(auks_krb5_stream_t * kstream,
 			    char *principal_name, size_t max_size)
 {
-	int fstatus = AUKS_ERROR ;
+	int fstatus;
 
 	fstatus = auks_krb5_stream_get_principal_name(kstream, principal_name,
 						      max_size, 
@@ -530,7 +530,7 @@ int
 auks_krb5_stream_get_rprinc(auks_krb5_stream_t * kstream,
 			    char *principal_name, size_t max_size)
 {
-	int fstatus = AUKS_ERROR ;
+	int fstatus;
 
 	fstatus = auks_krb5_stream_get_principal_name(kstream, principal_name,
 						      max_size,
