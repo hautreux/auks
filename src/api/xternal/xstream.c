@@ -259,12 +259,11 @@ xstream_connect(const char* hostname,
   socklen_t optlen;
   struct addrinfo hints;
 
-  int rc;
   struct pollfd ufds;
   int sockopt;
 
   int fstatus=XERROR;
-  int status=-1;
+  int status;
 
   /* set hint flag that indicate to get TCP/IP information only */
   memset(&hints,0,sizeof(hints));
@@ -313,6 +312,7 @@ xstream_connect(const char* hostname,
 	  VERBOSE("socket non-blocking flag is now set");
 	}
 
+	int rc;
 	rc=connect(sock, (struct sockaddr*) &addresse, sizeof(struct sockaddr_in));
 	/* connection failed */
 	if(rc<0 && errno != EINPROGRESS && errno != EALREADY){
@@ -441,7 +441,7 @@ xstream_close(int socket){
 
 int
 xstream_listen(int socket,int backlog){
-  int fstatus=XERROR;
+  int fstatus;
   char* function_name="xstream_listen";
   INIT_DEBUG2_MARK();
 
@@ -705,7 +705,7 @@ int xstream_receive_timeout(int socket,char* buffer,size_t length,int timeout){
 
 int xstream_send_msg_timeout(int socket,char* buffer,size_t length,int timeout){
 
-  int fstatus=-1;
+  int fstatus;
   uint32_t nlength;
   
   /* send message length */
@@ -734,11 +734,10 @@ int xstream_send_msg_timeout(int socket,char* buffer,size_t length,int timeout){
 
 int xstream_receive_msg_timeout(int socket,char** buffer,size_t* length,int timeout){
 
-  int fstatus=XERROR;
+  int fstatus;
   uint32_t nlength;
   
   char* mbuf;
-  size_t mlen;
   
   /* receive message length */
   fstatus=xstream_receive_timeout(socket,(char*)&nlength,sizeof(uint32_t),timeout);
@@ -746,6 +745,7 @@ int xstream_receive_msg_timeout(int socket,char** buffer,size_t* length,int time
     ERROR("unable to receive message length");
   }
   else{
+    size_t mlen;
     mlen=ntohl(nlength);
     VERBOSE("message length (%d) successfully received",mlen);
 

@@ -125,7 +125,7 @@
 int
 xqueue_init(xqueue_t* queue,unsigned int default_length,size_t item_size)
 {
-	int fstatus=XERROR;
+	int fstatus;
 	char* function_name="xqueue_init";
 	INIT_DEBUG2_MARK();
 	
@@ -206,7 +206,7 @@ xqueue_free_contents(xqueue_t* queue)
 int
 xqueue_enqueue_base(xqueue_t* queue,void* data,size_t length,int blocking)
 {
-	int fstatus=XERROR;
+	int fstatus;
 	char* function_name="xqueue_enqueue";
 	INIT_DEBUG_MARK();
 	
@@ -289,7 +289,7 @@ xqueue_enqueue(xqueue_t* queue,void* data,size_t length)
 {
 	return xqueue_enqueue_base(queue,data,length,1);
 
-	int fstatus=XERROR;
+	int fstatus;
 	char* function_name="xqueue_enqueue";
 	INIT_DEBUG_MARK();
 	
@@ -365,12 +365,11 @@ exit:
 int
 xqueue_dequeue_base(xqueue_t* queue,void* data,size_t length,int blocking)
 {
-	int fstatus=XERROR;
+	int fstatus;
 	char* function_name="xqueue_dequeue";
 	INIT_DEBUG_MARK();
 	
 	xfreelist_item_t* item;
-	xfreelist_t* freelist;
 	
 	fstatus=pthread_mutex_lock(&(queue->mutex));
 	if(fstatus){
@@ -399,8 +398,8 @@ xqueue_dequeue_base(xqueue_t* queue,void* data,size_t length,int blocking)
 		fstatus=XERROR_QUEUE_IS_EMPTY;
 	}
 	else{
-
 		/* check freelist validity */
+		xfreelist_t* freelist;
 		freelist=&(queue->freelist);
 		if(freelist==NULL){
 			fstatus=XERROR_QUEUE_FREELIST_IS_NULL;
@@ -503,12 +502,11 @@ xqueue_wait_4_emptiness(xqueue_t* queue)
 int
 xqueue_get_length(xqueue_t* queue,int* length)
 {
-	int fstatus=XERROR;
+	int fstatus;
 	char* function_name="xqueue_get_length";
 	INIT_DEBUG_MARK();
 
 	xfreelist_item_t* item;
-	int queue_length=0;
 
 	/* lock queue */
 	fstatus=pthread_mutex_lock(&(queue->mutex));
@@ -518,7 +516,7 @@ xqueue_get_length(xqueue_t* queue,int* length)
 		return XERROR_MUTEX_LOCK;
 	}
 	else{
-		
+		int queue_length = 0;
 		item=queue->head;
 		while(item!=NULL){
 			queue_length++;

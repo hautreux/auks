@@ -167,7 +167,7 @@ auksd_engine_init(auksd_engine_t * engine,
 		  int nat_traversal,
 		  int replay_cache)
 {
-	int fstatus = AUKS_ERROR ;
+	int fstatus;
 
 	char myhostname[MAXHOSTNAMELEN] ;
 

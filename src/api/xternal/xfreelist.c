@@ -124,8 +124,6 @@ xfreelist_init(xfreelist_t* list,unsigned int default_length,size_t item_size){
   xfreelist_item_t* items_ptr;
   void* heap_ptr;
 
-  int i;
-
   list->head=NULL;
   list->tail=NULL;
 
@@ -146,7 +144,7 @@ xfreelist_init(xfreelist_t* list,unsigned int default_length,size_t item_size){
       fstatus=XERROR_MEMORY;
     }
     else{
-
+      int i;
       /* initialize items and structure */
       items_ptr=list->items;
       heap_ptr=list->heap;

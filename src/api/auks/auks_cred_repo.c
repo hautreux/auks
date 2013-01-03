@@ -201,8 +201,9 @@ auks_cred_repo_init(auks_cred_repo_t * cr, char *cachedir,
 		fstatus = AUKS_ERROR_LIBRARY_INIT;
 	} else {
 		/* load cache */
-		fstatus = auks_cred_repo_load_cache(cr);
+		auks_cred_repo_load_cache(cr);
 		cr->read_only = 0;
+
 		/* set success */
 		fstatus = AUKS_SUCCESS;
 	}
@@ -377,8 +378,12 @@ auks_cred_repo_pack(auks_cred_repo_t * cr,auks_message_t* msg)
 
 	fstatus = auks_cred_repo_pack_nolock(cr,msg);
 	
-	/* unlock repository */
-	fstatus = auks_cred_repo_unlock(cr);
+	/* unlock repository but propagate pack error 
+	* if any */
+	if (fstatus == AUKS_SUCCESS)
+	  fstatus = auks_cred_repo_unlock(cr);
+	else
+	  auks_cred_repo_unlock(cr);
 	
 	return fstatus;
 }
@@ -395,8 +400,12 @@ auks_cred_repo_clean(auks_cred_repo_t * cr,int* pnb)
 
 	fstatus = auks_cred_repo_clean_nolock(cr,pnb);
 	
-	/* unlock repository */
-	fstatus = auks_cred_repo_unlock(cr);
+	/* unlock repository but propagate clean error 
+	 * if any */
+	if (fstatus == AUKS_SUCCESS)
+	  fstatus = auks_cred_repo_unlock(cr);
+	else
+	  auks_cred_repo_unlock(cr);
 
 	return fstatus;
 }

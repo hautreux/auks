@@ -162,7 +162,6 @@ void xverbose_setmaxlevel(int level){
 
 void xverbose_base(int level,char* format,va_list args){
 
-  char time_string[128];
   time_t current_time;
 
   FILE* default_stream=stdout;
@@ -174,6 +173,7 @@ void xverbose_base(int level,char* format,va_list args){
     stream=xverbose_stream;
 
   if(level<=xverbose_max_level){
+    char time_string[128];
     time(&current_time);
     time_string[0]='\0';
     ctime_r(&current_time,time_string);
@@ -232,7 +232,6 @@ void xdebug_setstream(FILE* stream){
 
 void xdebug_base(int level,char* format,va_list args){
 
-  char time_string[64];
   time_t current_time;
 
   FILE* default_stream=stdout;
@@ -244,6 +243,7 @@ void xdebug_base(int level,char* format,va_list args){
     stream=xdebug_stream;
   
   if(level<=xdebug_max_level){
+    char time_string[64];
     time(&current_time);
     time_string[0]='\0';
     ctime_r(&current_time,time_string);

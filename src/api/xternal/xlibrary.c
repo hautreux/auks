@@ -154,7 +154,7 @@ xlibrary_init(xlibrary_t* library,
   char* function_name="xlibrary_init";
   INIT_DEBUG2_MARK();
   
-  int fstatus=XERROR;
+  int fstatus;
   
   size_t item_size=item_maxsize;
   
@@ -274,7 +274,7 @@ xlibrary_get_item(xlibrary_t* library,
   INIT_DEBUG_MARK();
 
 
-  int fstatus=XERROR;
+  int fstatus;
 
   /* lock repository */
   fstatus=pthread_mutex_lock(&(library->mutex));
@@ -308,13 +308,9 @@ xlibrary_get_item_nolock(xlibrary_t* library,
   char* function_name="xlibrary_get_item_nolock";
   INIT_DEBUG2_MARK();
 
-  int fstatus=XERROR;
+  int fstatus;
   
-  void* result;
-
   xfreelist_item_t* pitem;
-  xfreelist_item_t* obj;
-
   xlibrary_item_t litem;
   
   /* set item reference */
@@ -327,11 +323,11 @@ xlibrary_get_item_nolock(xlibrary_t* library,
     fstatus=XERROR_FREELIST_IS_EMPTY;
   }
   else{
-
     /* build working freelist item */
     memcpy(pitem->data,&litem,sizeof(xlibrary_item_t));
   
     /* look for corresponding item in the tree */
+    void* result;
     result=tfind(pitem,&(library->root),_cmp_item_by_reference);
     if(result==NULL){
       ERROR("get_item: no item referenced by '%s' in tree",reference);
@@ -345,7 +341,7 @@ xlibrary_get_item_nolock(xlibrary_t* library,
 	fstatus=XERROR_LIBRARY_OBJECT_NOT_FOUND;
       }
       else {
-	
+	xfreelist_item_t* obj;
 	obj=(xfreelist_item_t*)litem.object;
 	memcpy(item,obj->data,item_size);
 	VERBOSE3("get_item: item referenced by '%s' successfully got",litem.reference);
@@ -374,7 +370,7 @@ xlibrary_remove_item(xlibrary_t* library,
   char* function_name="xlibrary_remove_item";
   INIT_DEBUG_MARK();
   
-  int fstatus=XERROR;
+  int fstatus;
 
   /* lock repository */
   fstatus=pthread_mutex_lock(&(library->mutex));
@@ -406,13 +402,9 @@ xlibrary_remove_item_nolock(xlibrary_t* library,
   char* function_name="xlibrary_remove_item_nolock";
   INIT_DEBUG_MARK();
 
-  int fstatus=XERROR;
-
-  void* result;
+  int fstatus;
 
   xfreelist_item_t* item;
-  xfreelist_item_t* pitem;
-
   xlibrary_item_t litem;
 
   /* set item reference */
@@ -425,6 +417,7 @@ xlibrary_remove_item_nolock(xlibrary_t* library,
     fstatus=XERROR_FREELIST_IS_EMPTY;
   }
   else{
+    void* result;
 
     /* build freelist item */
     memcpy(item->data,&litem,sizeof(xlibrary_item_t));
@@ -436,8 +429,8 @@ xlibrary_remove_item_nolock(xlibrary_t* library,
       fstatus=XERROR_LIBRARY_ITEM_NOT_FOUND;
     }
     else{
-      
       /* remove the item from the tree */
+      xfreelist_item_t* pitem;
       pitem=*(xfreelist_item_t**)result;
       tdelete(pitem,&(library->root),_cmp_item_by_reference);
       
@@ -469,7 +462,7 @@ xlibrary_add_item(xlibrary_t* library,
   char* function_name="xlibrary_add_item";
   INIT_DEBUG_MARK();
 
-  int fstatus=XERROR;
+  int fstatus;
   
   /* lock repository */
   fstatus=pthread_mutex_lock(&(library->mutex));
@@ -506,9 +499,7 @@ xlibrary_add_item_nolock(xlibrary_t* library,
   char* function_name="xlibrary_add_item_nolock";
   INIT_DEBUG2_MARK();
 
-  int fstatus=XERROR;
-
-  void* result;
+  int fstatus;
 
   xfreelist_item_t* pitem;
 
@@ -548,6 +539,7 @@ xlibrary_add_item_nolock(xlibrary_t* library,
       memcpy(pitem->data,&litem,sizeof(xlibrary_item_t));
 
       /* add the item to the tree */
+      void* result;
       result=tsearch(pitem,&(library->root),_cmp_item_by_reference);
       if(result==NULL){
 	ERROR("add_item: unable to add item referenced by '%s' to the tree",reference);
@@ -712,10 +704,9 @@ _release_item(void* p){
 void
 _print_item(const void* node,const VISIT method,const int depth){
 
-  xfreelist_item_t* item;
-  xlibrary_item_t* litem;
-
   if(method==leaf || method==postorder){
+    xfreelist_item_t* item;
+    xlibrary_item_t* litem;
 
     item=*(xfreelist_item_t**)node;
     litem=(xlibrary_item_t*)item->data;
@@ -756,11 +747,10 @@ _cmp_item_by_reference(const void* p1,const void* p2){
 void
 _count_item(const void* node,const VISIT method,const int depth){
 
-  xfreelist_item_t* item;
-  xlibrary_item_t* litem;
-  xlibrary_t* library;
-
   if(method==leaf || method==postorder){
+    xfreelist_item_t* item;
+    xlibrary_item_t* litem;
+    xlibrary_t* library;
 
     item=*(xfreelist_item_t**)node;
     litem=(xlibrary_item_t*)item->data;
