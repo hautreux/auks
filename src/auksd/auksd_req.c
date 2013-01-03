@@ -411,7 +411,7 @@ int
 _auksd_ping_req(void* p_args,char* principal,int role,
 		auks_message_t* req,auks_message_t* rep)
 {
-	int fstatus = AUKS_ERROR ;
+	int fstatus;
 	
 	/* initialized ping reply message */
 	fstatus = auks_message_init(rep,AUKS_PING_REPLY,NULL,0);
@@ -673,7 +673,7 @@ int
 _auksd_list_req(void* p_args,char* principal,int role,
 		auks_message_t* req,auks_message_t* rep)
 {
-	int fstatus = AUKS_ERROR ;
+	int fstatus;
 	
 	/* initialized ping reply message */
 	fstatus = auks_message_init(rep,AUKS_PING_REPLY,NULL,0);

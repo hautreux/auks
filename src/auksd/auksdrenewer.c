@@ -163,7 +163,7 @@ signal_handler(int signum)
 int
 renewer_main_function(auks_engine_t* engine,int* pr)
 {
-	int fstatus = AUKS_ERROR ;
+	int fstatus;
 
 	time_t ctime;
 
@@ -175,8 +175,6 @@ renewer_main_function(auks_engine_t* engine,int* pr)
 	auks_cred_t* acred;
 	int creds_nb;
 	
-	int child = 0;
-
 	renewed=0;
 
 	/* dump auks creds table */

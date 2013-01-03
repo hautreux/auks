@@ -465,7 +465,7 @@ exit:
 int auksd_main_loop(auksd_engine_t* engine)
 {
 
-	int fstatus=-1;
+	int fstatus;
 	int status;
 	
 	int i;
@@ -501,7 +501,7 @@ int auksd_main_loop(auksd_engine_t* engine)
 	}
 	
 	/* initialize socket queue */
-	fstatus=xqueue_init(&socket_queue,engine->queue_size,sizeof(int));
+	fstatus=xqueue_init(&socket_queue,queue_size,sizeof(int));
 	if(fstatus){
 		ERROR("auksd     : unable to initialize workers socket queue");
 		goto repo_exit;
