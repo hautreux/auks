@@ -95,9 +95,9 @@ _auks_buffer_expand(auks_buffer_t * buf,size_t length)
 {
 	int fstatus = AUKS_ERROR ;
 	int alloc = 0;
-	int nb;
 
 	if ( buf->length - buf->processed < length ) {
+		int nb;
 		nb = (int) length / BLOCK_SIZE  ;
 		buf->length += BLOCK_SIZE * nb ; 
 		if ( ( length % BLOCK_SIZE ) != 0 )
@@ -132,7 +132,7 @@ _auks_buffer_expand(auks_buffer_t * buf,size_t length)
 int
 auks_buffer_init(auks_buffer_t * buf,size_t length)
 {
-	int fstatus = AUKS_ERROR ;
+	int fstatus;
 
 	buf->data = NULL ;
 	buf->length = BLOCK_SIZE  ;
@@ -146,7 +146,7 @@ auks_buffer_init(auks_buffer_t * buf,size_t length)
 int
 auks_buffer_load(auks_buffer_t * buf,char * data,size_t length)
 {
-	int fstatus = AUKS_ERROR ;
+	int fstatus;
 
 	fstatus = auks_buffer_init(buf,length);
 	if ( fstatus == AUKS_SUCCESS ) {
@@ -177,7 +177,7 @@ auks_buffer_free_contents(auks_buffer_t * buf)
 int
 auks_buffer_pack_int(auks_buffer_t * buf,int i)
 {
-	int fstatus = AUKS_ERROR ;
+	int fstatus;
 
 	uint32_t ni;
 	size_t size = sizeof(uint32_t);
@@ -226,7 +226,7 @@ auks_buffer_unpack_uid(auks_buffer_t * buf,uid_t * u)
 int
 auks_buffer_pack_data(auks_buffer_t * buf,char * data,size_t length)
 {
-	int fstatus = AUKS_ERROR ;
+	int fstatus;
 
 	fstatus = _auks_buffer_expand(buf,length);
 	if ( fstatus == AUKS_SUCCESS ) {
