@@ -383,7 +383,6 @@ spank_auks_remote_init (spank_t sp, int ac, char *av[])
 	int fstatus;
 	auks_engine_t engine;
 	
-	char *p;
 	char *prev_krb5ccname = NULL;
 
 	static uint32_t jobid;
@@ -454,7 +453,7 @@ spank_auks_remote_init (spank_t sp, int ac, char *av[])
 
 	/* force KRB5CCNAME's value if the user wants so */
 	if (auks_hostcredcache_file != NULL) {
-		p = getenv("KRB5CCNAME");
+		char *p = getenv("KRB5CCNAME");
 		if ( p != NULL ) {
 			prev_krb5ccname = strdup(p);
 		}
@@ -588,7 +587,6 @@ spank_auks_remote_exit (spank_t sp, int ac, char **av)
 int
 _spank_auks_get_current_mode(spank_t sp, int ac, char *av[])
 {
-	int fstatus;
 	char spank_auks_env[5];
 
 	char* envval=NULL;
@@ -617,9 +615,9 @@ _spank_auks_get_current_mode(spank_t sp, int ac, char *av[])
 	}
 
 	if (spank_remote (sp)) {
-		fstatus = spank_getenv(sp,SPANK_AUKS_ENVVAR,
-				       spank_auks_env,5);
-		if ( fstatus == 0 ) {
+		int status = spank_getenv(sp,SPANK_AUKS_ENVVAR,
+					  spank_auks_env,5);
+		if ( status == 0 ) {
 			spank_auks_env[4]='\0';
 			envval=spank_auks_env;
 		}
