@@ -146,7 +146,7 @@ auks_api_set_loglevel(auks_engine_t* engine,int loglevel)
 int
 auks_api_close(auks_engine_t* engine)
 {
-	int fstatus = AUKS_ERROR ;
+	int fstatus;
 
 	fstatus = auks_engine_free_contents(engine);
 
@@ -216,23 +216,21 @@ auks_api_request(auks_engine_t* engine,auks_message_t* req,
 		for(i=1;i<=2;i++){
 
 			/* set connection options */
-			if(i%2==1){
-				server= engine->primary_address ;
-				port=engine->primary_port;
-				principal=engine->primary_principal;
-				timeout=timeout;
+			if(i%2 == 1){
+				server = engine->primary_address ;
+				port = engine->primary_port;
+				principal = engine->primary_principal;
 			}
 			else{
-				server= engine->secondary_address ;
-				port=engine->secondary_port;
-				principal=engine->secondary_principal;
-				timeout=timeout;
+				server = engine->secondary_address ;
+				port = engine->secondary_port;
+				principal = engine->secondary_principal;
 			}
 
 			/* try to connect primary server */
 			fstatus = AUKS_ERROR ;
 			stream = xstream_connect(server,port,timeout*1000);
-			if(stream<0){
+			if(stream < 0){
 				auks_log3("unable to connect to auks server "
 					  "%s:%s",server,port);
 				fstatus = AUKS_ERROR_API_CONNECTION_FAILED ;
@@ -349,7 +347,7 @@ auks_api_request(auks_engine_t* engine,auks_message_t* req,
 int
 auks_api_ping(auks_engine_t * engine)
 {
-	int fstatus = AUKS_ERROR ;
+	int fstatus;
   
 	auks_message_t req;
 	auks_message_t rep;
@@ -398,7 +396,7 @@ exit:
 int
 auks_api_dump_unpack(auks_message_t* msg,auks_cred_t** pcreds,int* pcreds_nb)
 {
-	int fstatus = AUKS_ERROR ;
+	int fstatus;
 
 	int creds_nb,i;
 	auks_cred_t* creds;
@@ -446,7 +444,7 @@ auks_api_dump_unpack(auks_message_t* msg,auks_cred_t** pcreds,int* pcreds_nb)
 int
 auks_api_dump(auks_engine_t * engine,auks_cred_t** pcreds,int* pcreds_nb)
 {
-	int fstatus = AUKS_ERROR ;
+	int fstatus;
   
 	auks_message_t req;
 	auks_message_t rep;
@@ -503,7 +501,7 @@ exit:
 int
 auks_api_add_cred(auks_engine_t * engine,char* cred_cache)
 {
-	int fstatus = AUKS_ERROR ;
+	int fstatus;
 
 	auks_cred_t cred;
 	
@@ -595,7 +593,7 @@ exit:
 int
 auks_api_get_cred(auks_engine_t * engine,uid_t uid,char* cred_cache)
 {
-	int fstatus = AUKS_ERROR ;
+	int fstatus;
 
 	auks_cred_t cred;
 
@@ -628,7 +626,7 @@ exit:
 int
 auks_api_get_auks_cred(auks_engine_t * engine,uid_t uid,auks_cred_t* cred)
 {
-	int fstatus = AUKS_ERROR ;
+	int fstatus;
 
 	auks_message_t req;
 	auks_message_t rep;
@@ -775,7 +773,7 @@ exit:
 int
 auks_api_renew_auks_cred(auks_engine_t * engine,auks_cred_t* cred2r,int mode)
 {
-	int fstatus = AUKS_ERROR ;
+	int fstatus;
 
 	auks_cred_t cred;
 	
@@ -813,7 +811,7 @@ auks_api_renew_auks_cred(auks_engine_t * engine,auks_cred_t* cred2r,int mode)
 int
 auks_api_remove_cred(auks_engine_t * engine,uid_t uid)
 {
-	int fstatus = AUKS_ERROR ;
+	int fstatus;
 
 	auks_message_t req;
 	auks_message_t rep;

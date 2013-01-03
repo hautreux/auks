@@ -264,7 +264,7 @@ exit:
 
 int auks_cred_free_contents(auks_cred_t * credential)
 {
-	int fstatus = AUKS_ERROR ;
+	int fstatus;
 
 	memset(credential->info.principal,'\0',
 	       AUKS_PRINCIPAL_MAX_LENGTH + 1);
@@ -289,7 +289,7 @@ int auks_cred_free_contents(auks_cred_t * credential)
 
 int auks_cred_extract(auks_cred_t* credential,char* ccache)
 {
-	int fstatus = AUKS_ERROR ;
+	int fstatus;
 	
 	char* buffer=NULL;
 	size_t length;
@@ -306,7 +306,7 @@ int auks_cred_extract(auks_cred_t* credential,char* ccache)
 int
 auks_cred_store(auks_cred_t * credential,char* ccache)
 {
-	int fstatus = AUKS_ERROR ;
+	int fstatus;
 
 	fstatus = auks_krb5_cred_store(ccache,credential->data,
 				       credential->length);
@@ -369,7 +369,7 @@ auks_cred_renew_test(auks_cred_t * credential,int minlifetime)
 int
 auks_cred_renew(auks_cred_t * credential,int flags)
 {
-	int fstatus = AUKS_ERROR ;
+	int fstatus;
 
 	char* rbuf = NULL ;
 	size_t rbuf_len = 0 ;
@@ -398,13 +398,13 @@ auks_cred_renew(auks_cred_t * credential,int flags)
 int
 auks_cred_deladdr(auks_cred_t * credential)
 {
-	int fstatus = AUKS_ERROR ;
+	int fstatus;
 
 	char* rbuf = NULL ;
 	size_t rbuf_len = 0 ;
 
 	fstatus = auks_krb5_cred_deladdr_buffer(credential->data,
-					      credential->length,
+						credential->length,
 						&rbuf,&rbuf_len);
 	if ( fstatus == AUKS_SUCCESS ) {
 		/* check output buffer length versus auks credential */
@@ -451,7 +451,7 @@ auks_cred_log(auks_cred_t * credential)
 
 int auks_cred_pack(auks_cred_t* cred,auks_message_t * msg)
 {
-	int fstatus = AUKS_ERROR ;
+	int fstatus;
 
 	/* pack principal name */
 	fstatus = auks_message_pack_int(msg,
@@ -504,7 +504,7 @@ int auks_cred_pack(auks_cred_t* cred,auks_message_t * msg)
 
 int auks_cred_unpack(auks_cred_t* cred,auks_message_t * msg)
 {
-	int fstatus = AUKS_ERROR ;
+	int fstatus;
 	
 	int i;
 

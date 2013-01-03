@@ -293,7 +293,7 @@ int
 auks_acl_get_role(auks_acl_t * p_acl, char *principal, char *host,
 		  enum AUKS_ACL_ROLE *role)
 {
-	int fstatus = AUKS_ERROR;
+	int fstatus;
 
 	int i;
 	auks_acl_rule_t *p_rule;
@@ -437,8 +437,6 @@ _auks_acl_rule_check_host(auks_acl_rule_t * p_rule,char *host)
 	struct addrinfo *ai;
 	struct sockaddr_in addr;
 
-	char * rule_host;
-
 	/* all nodes match */
 	if (strncmp(p_rule->host, "*", 2) == 0) {
 		auks_log2("%s matches rule host %s", host, p_rule->host);
@@ -459,6 +457,7 @@ _auks_acl_rule_check_host(auks_acl_rule_t * p_rule,char *host)
 	hints.ai_socktype = SOCK_STREAM;
 	if (getaddrinfo(p_rule->host, "", &hints, &aitop) == 0) {
 		for (ai = aitop; ai; ai = ai->ai_next) {
+			char * rule_host;
 			memcpy(&addr, ai->ai_addr, ai->ai_addrlen);
 			rule_host = inet_ntoa((struct in_addr) addr.sin_addr);
 			if (strncmp(host, rule_host, strlen(host) + 1) ==
