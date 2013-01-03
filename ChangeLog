@@ -4,6 +4,7 @@ auks-0.4.1 (ongoing)
 	* auks SLURM Spank plugin: add hostcredcache= conf pragma to specify
 	  a particular credential cache for the slurmd actions (based on a 
 	  patch from Nacho Barrientos, CERN)
+	* code cleaning for cppcheck usage
 
 10/07/2010 Matthieu Hautreux <matthieu.hautreux@cea.fr>
 	
