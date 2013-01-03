@@ -348,7 +348,7 @@ auks_engine_set_logfile(auks_engine_t * engine,char* logfile)
 int
 auks_engine_set_loglevel(auks_engine_t * engine,int loglevel)
 {
-	int fstatus ;
+	int fstatus = AUKS_SUCCESS ;
 	
 	engine->loglevel = loglevel;
 	xverbose_setmaxlevel(loglevel);
