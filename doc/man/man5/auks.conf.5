@@ -10,6 +10,13 @@ auks.conf \- AUKS configuration file
 \fBauks.conf\fR is an ASCII configuration file which describes the 
 basic behaviors of AUKS components.
 .LP
+The configuration file location can be overwritten using the 
+\fBAUKS_CONF\fR environment variable or using the command line
+clients "-f file" argument when available.
+The "-c file" takes precedence over the environment variable
+which takes precedence over the default configuration file as defined
+at compilation time (usually %sysconfdir%/auks.conf).
+.LP
 The configuration file is made of blocks describing the various 
 programs expected behaviors. A block is of the form :
 .LP
@@ -113,19 +120,23 @@ to the parameters described here. \fBauks\fR is an example of such a client.
 .TP
 \fBLogFile\fR
 specifies the file in which to log AUKS details.
-The default is \fB/dev/stdout\fR.
+The default is \fB/dev/stdout\fR. This parameter can be externally modified
+using the \fBAUKS_API_LOGFILE\fR environment variable.
 .TP
 \fBLogLevel\fR
 specifies the level of verbosity to use. The default is \fB0\fR which 
-means no log message.
+means no log message. This parameter can be externally modified using
+the \fBAUKS_API_LOGLEVEL\fR environment variable.
 .TP
 \fBDebugFile\fR
 specifies the file in which to put AUKS debug details.
-The default is \fB/dev/stdout\fR.
+The default is \fB/dev/stdout\fR. This parameter can be externally modified
+using the \fBAUKS_API_DEBUGFILE\fR environment variable.
 .TP
 \fBDebugLevel\fR
 specifies the level of debug to use. The default is \fB0\fR which 
-means no debug message.
+means no debug message. This parameter can be externally modified
+using the \fBAUKS_API_DEBUGLEVEL\fR environment variable.
 
 
 .SH "AUKSD CONFIGURATION"
