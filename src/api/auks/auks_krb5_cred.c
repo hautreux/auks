@@ -1026,4 +1026,168 @@ exit:
 }
 
 
+int
+auks_krb5_cred_prefetch(char *ccachefilename, char *target_princ,
+			char **p_buffer,size_t *p_buffer_length)
+{
+	int fstatus = AUKS_ERROR;
+	int read_cred_is_tgt = 0;
+	char* buffer;
+	size_t length;
 
+	/* kerberos related variables */
+	krb5_context context;
+	krb5_auth_context auth_context;
+	krb5_error_code err_code;
+	krb5_ccache ccache;
+	krb5_principal principal;
+	krb5_creds pf_cred;
+	krb5_creds *p_cred_out = NULL;
+	krb5_replay_data krdata;
+	krb5_data *p_outbuf;
+
+	/* initialize kerberos context */
+	err_code = krb5_init_context(&context);
+	if (err_code) {
+		auks_error("unable to initialize kerberos context : %s",
+			   error_message(err_code));
+		fstatus = AUKS_ERROR_KRB5_CRED_INIT_CTX ; 
+		goto exit;
+	}
+	auks_log("kerberos context successfully initialized");
+		
+	/* initialize kerberos credential cache structure */
+	if (ccachefilename == NULL)
+		err_code = krb5_cc_default(context,&ccache);
+	else
+		err_code = krb5_cc_resolve(context,ccachefilename,&ccache);
+	if (err_code) {
+		auks_error("unable to resolve credential cache : %s",
+			   error_message(err_code));
+		fstatus = AUKS_ERROR_KRB5_CRED_OPEN_CC ;
+		goto ctx_exit ;
+	}
+	auks_log("credential cache successfully resolved");
+
+	/* get principal using credential cache */
+	err_code = krb5_cc_get_principal(context,ccache,&principal);
+	if (err_code) {
+		auks_error("unable to get principal from credential cache : %s",
+			   error_message(err_code));
+		fstatus = AUKS_ERROR_KRB5_CRED_GET_PRINC ;
+		goto cc_exit ;
+	}
+	auks_log("principal successfully extracted from credential cache");
+
+	/* now proceed with prefetching stage */
+	memset(&pf_cred, 0,sizeof(pf_cred));
+
+	/* copy client principal in futur credential */
+	err_code = krb5_copy_principal(context,principal,
+				       &pf_cred.client);
+	if (err_code) {
+		auks_error("unable to put client principal into "
+			   "request cred : %s",error_message(err_code));
+		fstatus = AUKS_ERROR_KRB5_CRED_CP_PRINC ;
+		goto princ_exit;
+	}
+	auks_log("client principal successfully put into request cred");
+
+	/* create prefetching targeted principal in futur credential using */
+	/* the string description of the principal */
+	err_code = krb5_parse_name(context,target_princ,
+				   &pf_cred.server);
+	if (err_code) {
+		auks_error("unable to put the principal to prefetch into "
+			   "request cred : %s",error_message(err_code));
+		fstatus = AUKS_ERROR_KRB5_CRED_PARSE_PRINC;
+		goto cred_exit;
+	}
+	auks_log("server principal successfully put into request cred");
+
+	/* prefetch the credential */
+	err_code = krb5_get_credentials(context,0,ccache,
+					&pf_cred,&p_cred_out);
+	if (err_code) {
+		auks_error("unable to prefetch targeted principal '%s' : %s",
+			   target_princ,error_message(err_code));
+		fstatus = AUKS_ERROR_KRB5_CRED_PREFETCH_CRED;
+		goto prefetch_exit;
+	} else {
+		auks_log("targeted principal '%s' successfully prefetched",
+			 target_princ);
+	}
+
+	/* got to exit if no output buffer required */
+	if (p_buffer == NULL) {
+		auks_log("skipping prefetched cred storage in output buffer");
+		fstatus = AUKS_SUCCESS ;
+		goto prefetch_exit;
+	}
+
+	/* initialize a nullified kerberos authentication context in order */
+	/* to decode credential from buffer */
+	err_code = krb5_auth_con_init(context, &auth_context);
+	if (err_code) {
+		auks_error("unable to initialize kerberos authentication"
+			   " context : %s",error_message(err_code));
+		fstatus = AUKS_ERROR_KRB5_CRED_INIT_AUTH_CTX ;
+		goto prefetch_exit;
+	}
+	auks_log("kerberos authentication context successfully initialized");
+
+	/* clear kerberos authentication context flags */
+	krb5_auth_con_setflags(context, auth_context, 0);
+
+	/* extract credential data */
+	err_code = krb5_mk_1cred(context,auth_context,p_cred_out,
+				 &p_outbuf,&krdata);
+	if (err_code) {
+		auks_error("unable to dump credential into working buffer : %s",
+			   error_message(err_code));
+		fstatus = AUKS_ERROR_KRB5_CRED_MK_CRED ;
+		goto auth_exit;
+	}
+	auks_log("credential successfully dumped into buffer");
+
+	/* allocate output buffer */
+	length = p_outbuf->length;
+	buffer = (char *) malloc(length * sizeof(char));
+	if (buffer == NULL) {
+		auks_error("unable to allocate memory for credential data "
+			   "storage");
+		fstatus = AUKS_ERROR_KRB5_CRED_MALLOC ;
+		goto mk_exit;
+	}
+
+	/* copy credential data into output buffer */
+	memcpy(buffer,p_outbuf->data,length);
+	*p_buffer = buffer;
+	*p_buffer_length = length;
+	auks_log("credential successfully stored in output buffer");
+	fstatus = AUKS_SUCCESS ;
+	
+mk_exit:
+	krb5_free_data(context,p_outbuf);
+
+auth_exit:
+	krb5_auth_con_free(context, auth_context);
+
+prefetch_exit:
+	krb5_free_creds(context,p_cred_out);
+
+cred_exit:
+	krb5_free_cred_contents(context,&pf_cred);
+
+princ_exit:
+	krb5_free_principal(context,principal);
+
+cc_exit:
+	krb5_cc_close(context, ccache);
+
+ctx_exit:
+	krb5_free_context(context);
+
+exit:
+	return fstatus;
+}

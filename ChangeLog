@@ -1,4 +1,5 @@
 auks-0.4.1 (ongoing)
+	* api: add auks_api_prefetch_tgs call to perform local TGS prefetching
 	* auks: modify verbosity behavior of auks command line clients
 	  the new logic is to require -v to have a status line printed
 	  and mutiple -v options to increase the verbosity level of both

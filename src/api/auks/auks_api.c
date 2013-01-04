@@ -863,3 +863,38 @@ req_exit:
 exit:  
 	return fstatus;
 }
+
+int auks_api_prefetch_tgs(auks_engine_t * engine, char* ccache, char* princ)
+{
+	int fstatus;
+
+	auks_cred_t acred;
+
+	char *data;
+	size_t len;
+
+	if (ccache == NULL)
+		ccache = engine->ccache;
+
+	fstatus = auks_krb5_cred_prefetch(ccache,princ,&data,&len);
+	if ( fstatus != AUKS_SUCCESS ) {
+		auks_log2("unable to prefetch TGS of principal '%s' : %s",
+			  princ,auks_strerror(fstatus));
+		goto exit;
+	}
+	auks_log3("TGS of principal '%s' successfully prefetched",princ);
+
+	/* log prefetched TGS information */
+	fstatus = auks_cred_init(&acred,data,len);
+	if (fstatus == AUKS_SUCCESS) {
+		auks_cred_log(&acred);
+		auks_cred_free_contents(&acred);
+	}
+
+prefetch_exit:
+	free(data);
+
+exit:
+	return fstatus;
+
+}
