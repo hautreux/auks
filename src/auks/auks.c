@@ -109,12 +109,13 @@ main(int argc,char** argv)
 	int debug_level=0;
 	int verbose_level=0;
 	char* conf_file_string;
+	char* pfprinc_str;
 
 	/* options processing variables */
 	char* progname;
-	char* optstring="dvhf:H:pagrDC:u:R:";
+	char* optstring="dvhf:H:pagrDC:u:R:P:";
 	char* short_options_desc="\nUsage : %s [-h] [-dv] [-f conffile] \
-[-C ccache] [-p|a|g|r|D] [-R once|loop|force] [-u uid] \n\n";
+[-C ccache] [-p|a|g|r|D] [-R once|loop|force] [-P pfprinc] [-u uid] \n\n";
 	char* addon_options_desc="\
 \t-h\t\tshow this message\n\
 \t-d\t\tincrease debug level\n\
@@ -126,7 +127,8 @@ main(int argc,char** argv)
 \t-D\t\tdump request\n\
 \t-r\t\tremove request\n\
 \t-R mode\t\trenew credential according to specified mode\n\
-\t-C ccache\tConfiguration file\n\
+\t-P pfprinc\tprefetch provided principal in ccache\n\
+\t-C ccache\tcredential cache to use\n\
 \t-u uid\t\tuid of requested cred owner (get request only)\n\n";
 
 	char  option;
@@ -149,6 +151,7 @@ main(int argc,char** argv)
 		progname++;
 
 	conf_file_string=NULL;
+	pfprinc_str = NULL;
 
 	/* process options */
 	while((option = getopt(argc,argv,optstring)) != -1)
@@ -197,6 +200,9 @@ main(int argc,char** argv)
 				exit(1);
 			}
 			break;
+		case 'P' :
+			pfprinc_str=strdup(optarg);
+			break;
 		case 'D' :
 			action=DUMP_REQUEST;
 			break;
@@ -229,6 +235,15 @@ main(int argc,char** argv)
 		auks_api_set_loglevel(&engine,verbose_level);
 	}
 	
+	/* check if we were requested to prefetch a TGS */
+	if (pfprinc_str != NULL) {
+		fstatus = auks_api_prefetch_tgs(&engine,ccache,pfprinc_str);
+
+		/* only proceed with an action if something requested */
+		if (!action)
+			goto rc_check;
+	}
+
 	switch(action){
 		
 	case ADD_REQUEST :
