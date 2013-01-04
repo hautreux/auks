@@ -116,6 +116,7 @@ int auks_cred_init(auks_cred_t * credential, char *data, size_t length)
 	char pwnam_buffer[pwnam_buffer_length];
 
 	credential->info.principal[0] = '\0';
+	credential->info.srv_princ[0] = '\0';
 	credential->info.uid = AUKS_CRED_INVALID_UID;
 
 	credential->info.starttime = AUKS_CRED_INVALID_TIME;
@@ -123,6 +124,8 @@ int auks_cred_init(auks_cred_t * credential, char *data, size_t length)
 	credential->info.renew_till = AUKS_CRED_INVALID_TIME;
 
 	credential->info.addressless = 1;
+
+	credential->info.type = AUKS_CRED_TYPE_UNKNOWN;
 
 	credential->data[1] = '\0';
 	credential->length = 0;
@@ -182,8 +185,9 @@ int auks_cred_init(auks_cred_t * credential, char *data, size_t length)
 		fstatus = AUKS_ERROR_CRED_INIT_KRB_RD_BUFFER ;
 		goto auth_ctx_exit;
 	}
-
 	auks_log("input buffer credential successfully unserialized");
+
+	/* extract client principal */
 	err_code = krb5_unparse_name_ext(context,(*creds)->client,&tmp_string,
 					 (unsigned int *) &tmp_size);
 	if (err_code) {
@@ -199,9 +203,31 @@ int auks_cred_init(auks_cred_t * credential, char *data, size_t length)
 		fstatus = AUKS_ERROR_CRED_INIT_KRB_PRINC_TOO_LONG ;
 		goto creds_exit;
 	}
-	auks_log("principal successfully unparse");
+	auks_log("principal successfully unparsed");
 	memcpy(credential->info.principal,tmp_string,tmp_size);
 	credential->info.principal[tmp_size] = '\0';
+
+	/* extract server principal */
+	free(tmp_string); tmp_string = NULL;
+	err_code = krb5_unparse_name_ext(context,(*creds)->server,&tmp_string,
+					 (unsigned int *) &tmp_size);
+	if (err_code) {
+		auks_error("unable to unparse srv_princ : %s",
+			   error_message(err_code));
+		fstatus = AUKS_ERROR_CRED_INIT_KRB_RD_PRINC ;
+		goto creds_exit;
+	} else if (tmp_size > AUKS_PRINCIPAL_MAX_LENGTH) {
+		auks_error("unable to unparse srv_princ : %s",
+			   "principal is too long (more than %d characters)",
+			   AUKS_PRINCIPAL_MAX_LENGTH);
+		free(tmp_string);
+		fstatus = AUKS_ERROR_CRED_INIT_KRB_PRINC_TOO_LONG ;
+		goto creds_exit;
+	}
+	auks_log("srv_princ successfully unparsed");
+	memcpy(credential->info.srv_princ,tmp_string,tmp_size);
+	credential->info.srv_princ[tmp_size] = '\0';
+
 	/* associated username from principal */
 	err_code = krb5_aname_to_localname(context,(*creds)->client,
 					   AUKS_PRINCIPAL_MAX_LENGTH,username);
@@ -232,6 +258,14 @@ int auks_cred_init(auks_cred_t * credential, char *data, size_t length)
 	/* addresslessness */
 	if (((*creds)->addresses) != NULL)
 		credential->info.addressless = 0;
+
+	/* credential type TGT|TGS */
+	if ( ((*creds)->ticket_flags & TKT_FLG_INITIAL) 
+	     || ((*creds)->ticket_flags & TKT_FLG_FORWARDED) ) {
+		credential->info.type = AUKS_CRED_TYPE_TGT;
+	} else {
+		credential->info.type = AUKS_CRED_TYPE_TGS;
+	}
 
 	/* duplicate input buffer */
 	credential->length = (unsigned int) length;
@@ -270,6 +304,10 @@ int auks_cred_free_contents(auks_cred_t * credential)
 	       AUKS_PRINCIPAL_MAX_LENGTH + 1);
 	credential->info.principal[0] = '\0';
 
+	memset(credential->info.srv_princ,'\0',
+	       AUKS_PRINCIPAL_MAX_LENGTH + 1);
+	credential->info.srv_princ[0] = '\0';
+
 	credential->info.uid = AUKS_CRED_INVALID_UID;
 
 	credential->info.starttime = AUKS_CRED_INVALID_TIME;
@@ -277,6 +315,8 @@ int auks_cred_free_contents(auks_cred_t * credential)
 	credential->info.renew_till = AUKS_CRED_INVALID_TIME;
 
 	credential->info.addressless = 1;
+
+	credential->info.type = AUKS_CRED_TYPE_UNKNOWN;
 
 	memset(credential->data,'\0',AUKS_CRED_DATA_MAX_LENGTH);
 	credential->length = 0;
@@ -427,9 +467,21 @@ int
 auks_cred_log(auks_cred_t * credential)
 {
 	int fstatus = AUKS_SUCCESS ;
+	char *type;
+
+	if (credential->info.type == AUKS_CRED_TYPE_TGT)
+		type = "TGT";
+	else if (credential->info.type == AUKS_CRED_TYPE_TGS)
+		type = "TGS";
+	else if (credential->info.type == AUKS_CRED_TYPE_UNKNOWN)
+		type = "unknown";
+	else
+		type = "invalid!";
 
 	auks_log("##############");
+	auks_log("# type       : %s",type);
 	auks_log("# principal  : %s",credential->info.principal);
+	auks_log("# srv_princ  : %s",credential->info.srv_princ);
 	auks_log("# uid        : %u",(unsigned int)
 		 credential->info.uid);
 	auks_log("# starttime  : %u",(unsigned int)
@@ -464,6 +516,17 @@ int auks_cred_pack(auks_cred_t* cred,auks_message_t * msg)
 	if ( fstatus != AUKS_SUCCESS )
 		return fstatus;
 
+	/* pack srv_princ name */
+	fstatus = auks_message_pack_int(msg,
+					(int)AUKS_PRINCIPAL_MAX_LENGTH + 1);
+	if ( fstatus != AUKS_SUCCESS )
+		return fstatus;
+
+	fstatus = auks_message_pack_data(msg,cred->info.srv_princ,
+					 AUKS_PRINCIPAL_MAX_LENGTH + 1);
+	if ( fstatus != AUKS_SUCCESS )
+		return fstatus;
+
 	/* pack uid */
 	fstatus = auks_message_pack_uid(msg,cred->info.uid);
 	if ( fstatus != AUKS_SUCCESS )
@@ -482,6 +545,11 @@ int auks_cred_pack(auks_cred_t* cred,auks_message_t * msg)
 	
 	/* pack cred flags */
 	fstatus = auks_message_pack_int(msg,(int)cred->info.addressless);
+	if ( fstatus != AUKS_SUCCESS )
+		return fstatus;
+
+	/* pack cred type */
+	fstatus = auks_message_pack_int(msg,(int)cred->info.type);
 	if ( fstatus != AUKS_SUCCESS )
 		return fstatus;
 
@@ -521,6 +589,16 @@ int auks_cred_unpack(auks_cred_t* cred,auks_message_t * msg)
 	if ( fstatus != AUKS_SUCCESS )
 		return fstatus;
 
+	/* unpack srv_princ name */
+	fstatus = auks_message_unpack_int(msg,&i);
+	if ( fstatus != AUKS_SUCCESS ||
+	     i != AUKS_PRINCIPAL_MAX_LENGTH + 1 )
+		return fstatus;
+	fstatus = auks_message_unpack_data(msg,cred->info.srv_princ,
+					   AUKS_PRINCIPAL_MAX_LENGTH + 1);
+	if ( fstatus != AUKS_SUCCESS )
+		return fstatus;
+
 	/* unpack uid */
 	fstatus = auks_message_unpack_uid(msg,&(cred->info.uid));
 	if ( fstatus != AUKS_SUCCESS )
@@ -539,6 +617,11 @@ int auks_cred_unpack(auks_cred_t* cred,auks_message_t * msg)
 	
 	/* pack cred flags */
 	fstatus = auks_message_unpack_int(msg,(int*)&(cred->info.addressless));
+	if ( fstatus != AUKS_SUCCESS )
+		return fstatus;
+
+	/* pack cred type */
+	fstatus = auks_message_unpack_int(msg,(int*)&(cred->info.type));
 	if ( fstatus != AUKS_SUCCESS )
 		return fstatus;
 

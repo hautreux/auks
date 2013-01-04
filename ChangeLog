@@ -1,4 +1,5 @@
 auks-0.4.1 (ongoing)
+	* api: enhance auks_cred_t adding server principal and cred type TGT/TGS
 	* api: enable to externally specify API log/debug files and levels 
 	* auks: add "-R force" parameter to force the renewal process
 	* aukspriv: add kinit timeout logic
