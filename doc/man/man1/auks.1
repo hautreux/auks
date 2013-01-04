@@ -4,7 +4,7 @@
 auks \- client program to manage AUKS credentials
 
 .SH "SYNOPSIS"
-\fBauks\fR [\fI-h\fR] [\fI-dv\fR] [\fI-f auks.conf\fR] [\fI-p|a|g|r|D\fR] [\fI-R once|loop\fR] [\fI-u uid\fR] [\fI-C ccache\fR]
+\fBauks\fR [\fI-h\fR] [\fI-dv\fR] [\fI-f auks.conf\fR] [\fI-p|a|g|r|D\fR] [\fI-R once|loop|force\fR] [\fI-u uid\fR] [\fI-C ccache\fR]
 
 .SH "DESCRIPTION"
 .LP
@@ -62,12 +62,13 @@ dump all the AUKS kerberos credentials using the first responding AUKS daemon.
 This operation requires at least the \fBadmin\fR privilege.
 
 .TP
-\fB\-R once|loop\fR
+\fB\-R once|loop|force\fR
 use AUKS commandline client as a credential renewer process. In \fBloop\fR mode,
 the process exits only when an error occured or the credential can no longer 
 be renewed. Used renewal mechanism is to first try to renew credential using 
 the first responding AUKS daemon and second to use kerberos KDC in case of 
 failure. In \fBonce\fR mode, the ticket is renewed once, only if needed, and 
+the program exits. In \fBforce\fR mode, the ticket is renewed once and 
 the program exits. This operation requires at least the \fBuser\fR privilege.
 
 .TP
