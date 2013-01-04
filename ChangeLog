@@ -1,4 +1,8 @@
 auks-0.4.1 (ongoing)
+	* auks: modify verbosity behavior of auks command line clients
+	  the new logic is to require -v to have a status line printed
+	  and mutiple -v options to increase the verbosity level of both
+	  the command and the underlying API to capture more infos
 	* api: enhance auks_cred_t adding server principal and cred type TGT/TGS
 	* api: enable to externally specify API log/debug files and levels 
 	* auks: add "-R force" parameter to force the renewal process

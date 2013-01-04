@@ -224,8 +224,10 @@ main(int argc,char** argv)
 		goto exit;
 	}
 
-	if ( verbose_level > 0 )
+	if ( verbose_level > 0 ) {
 		auks_api_set_logfile(&engine,"/dev/stdout");
+		auks_api_set_loglevel(&engine,verbose_level);
+	}
 	
 	switch(action){
 		
@@ -262,12 +264,15 @@ main(int argc,char** argv)
 
 	}
 
-	if ( fstatus != AUKS_SUCCESS ) {
-		fprintf(stderr,"Auks API request failed : %s\n",
-			auks_strerror(fstatus));
-	}
-	else {
-		fprintf(stdout,"Auks API request succeed\n");
+rc_check:
+	if (verbose_level > 0) {
+		if ( fstatus != AUKS_SUCCESS ) {
+			fprintf(stderr,"Auks API request failed : %s\n",
+				auks_strerror(fstatus));
+		}
+		else {
+			fprintf(stdout,"Auks API request succeed\n");
+		}
 	}
 
 	auks_api_close(&engine);
