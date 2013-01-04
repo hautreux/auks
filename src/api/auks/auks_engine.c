@@ -207,11 +207,29 @@ auks_engine_init(auks_engine_t * engine,
 	init_strdup(engine->secondary_principal,
 		    secondary_principal);
 
+	if ( getenv("AUKSAPI_LOGFILE") )
+		logfile = getenv("AUKSAPI_LOGFILE");
 	init_strdup(engine->logfile,logfile);
-	engine->loglevel = loglevel;
 
+	engine->loglevel = loglevel;
+	if ( getenv("AUKSAPI_LOGLEVEL") ) {
+		loglevel = (int) strtol(getenv("AUKSAPI_LOGLEVEL"),
+					(char **) NULL,10);
+		if (loglevel != LONG_MIN && loglevel != LONG_MAX)
+			engine->loglevel = loglevel;
+	}
+
+	if ( getenv("AUKSAPI_DEBUGFILE") )
+		debugfile = getenv("AUKSAPI_DEBUGFILE");
 	init_strdup(engine->debugfile,debugfile);
+
 	engine->debuglevel = debuglevel;
+	if ( getenv("AUKSAPI_DEBUGLEVEL") ) {
+		debuglevel = (int) strtol(getenv("AUKSAPI_DEBUGLEVEL"),
+					(char **) NULL,10);
+		if (debuglevel != LONG_MIN && debuglevel != LONG_MAX)
+			engine->debuglevel = debuglevel;
+	}
 
 	engine->retries = retries ;
 	engine->timeout = timeout ;
