@@ -298,6 +298,12 @@ auks_strerror(int error)
 	case AUKS_ERROR_KRB5_CRED_GET_FWD :
 		return "krb5 cred : " "unable to get forwarded cred" ;
 		break ;
+	case AUKS_ERROR_KRB5_CRED_PARSE_PRINC :
+		return "krb5 cred : " "unable to convert string to krb5 principal" ;
+		break ;
+	case AUKS_ERROR_KRB5_CRED_PREFETCH_CRED :
+		return "krb5 cred : " "unable to prefetch TGS from KDC" ;
+		break ;
 
 	/* -- AUKS KRB5 STREAM */
 	case AUKS_ERROR_KRB5_STREAM_GETSOCKNAME :
