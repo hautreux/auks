@@ -86,13 +86,19 @@
 
 #define AUKS_CRED_DATA_MAX_LENGTH 2048
 
+#define AUKS_CRED_TYPE_UNKNOWN       0
+#define AUKS_CRED_TYPE_TGT           1
+#define AUKS_CRED_TYPE_TGS           2
+
 typedef struct auks_cred_info {
 	char principal[AUKS_PRINCIPAL_MAX_LENGTH + 1];
+	char srv_princ[AUKS_PRINCIPAL_MAX_LENGTH + 1];
 	uid_t uid;
 	time_t starttime;
 	time_t endtime;
 	time_t renew_till;
 	int addressless;
+	int type;
 } auks_cred_info_t;
 
 typedef struct auks_cred {
