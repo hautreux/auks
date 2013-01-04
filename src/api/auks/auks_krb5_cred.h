@@ -212,4 +212,28 @@ int auks_krb5_cred_renew_buffer(char *in_buf,size_t in_buf_len,
 int auks_krb5_cred_deladdr_buffer(char *in_buf,size_t in_buf_len,
 				  char** pout_buf,size_t *pout_buf_len);
 
+/*!
+ * \brief Prefetch a TGS, store it in a credential cache as well as in 
+ *        the output buffer
+ * \internal
+ *
+ * \param cachefilename credential cache file (NULL if defaut one must be used)
+ * \param target_princ targeted principal to prefetch
+ * \param p_buffer pointer on a char* buffer that will be allocated and will 
+ *        store the credential content
+ * \param p_buffer_length pointer on the size of the buffer that will be stored
+ *
+ * \retval AUKS_SUCCESS
+ * \retval AUKS_ERROR
+ * \retval AUKS_ERROR_KRB5_CRED_INIT_CTX
+ * \retval AUKS_ERROR_KRB5_CRED_OPEN_CC
+ * \retval AUKS_ERROR_KRB5_CRED_READ_CC
+ * \retval AUKS_ERROR_KRB5_CRED_NO_TGT_FOUND
+ * \retval AUKS_ERROR_KRB5_CRED_CP_PRINC
+ * \retval AUKS_ERROR_KRB5_CRED_PARSE_PRINC
+ *
+ */
+int auks_krb5_cred_prefetch(char *cachefilename, char *target_princ,
+			    char **p_buffer,size_t *p_buffer_length);
+
 #endif

@@ -273,6 +273,21 @@ int
 auks_api_dump_unpack(auks_message_t* msg,auks_cred_t** pcreds,int* pcreds_nb);
 
 /*!
+ * \brief Prefetch a TGS into the ccache, optionaly getting a copy in memory
+ *
+ * \param engine pointer on the engine structure to use
+ * \param ccache optional file to use for prefetching (in/out)
+ * \param princ principal to prefetch a TGS for
+ *
+ * \retval AUKS_SUCCESS
+ * \retval AUKS_ERROR
+ * \retval AUKS_ERROR_...
+ *
+ */
+int
+auks_api_prefetch_tgs(auks_engine_t * engine, char* ccache, char* princ);
+
+/*!
  * @}
 */
 #endif
