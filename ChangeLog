@@ -1,4 +1,5 @@
 auks-0.4.1 (ongoing)
+	* auks: add "-R force" parameter to force the renewal process
 	* aukspriv: add kinit timeout logic
 	* auks: automatically inhibate auks support when no ccache available
 	* auks SLURM Spank plugin: add hostcredcache= conf pragma to specify

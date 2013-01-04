@@ -698,8 +698,9 @@ auks_api_renew_cred(auks_engine_t * engine,char* cred_cache,int mode)
 
 	while ( loop == 1 ) {
 
-		/* prevent from looping if mode is "once" */
-		if ( mode == AUKS_API_RENEW_ONCE )
+		/* prevent from looping if mode is "once" or "force" */
+		if ( mode == AUKS_API_RENEW_ONCE || 
+		     mode == AUKS_API_RENEW_FORCE )
 			loop = 0;
 
 		/* extract auks cred from given cache */
@@ -722,15 +723,15 @@ auks_api_renew_cred(auks_engine_t * engine,char* cred_cache,int mode)
 			loop=0;
 			goto end_loop;
 		}
-		else if ( fstatus == AUKS_ERROR_CRED_STILL_VALID ) {
+		else if ( fstatus == AUKS_ERROR_CRED_STILL_VALID && 
+			  mode != AUKS_API_RENEW_FORCE ) {
 			auks_log3("%s's cred renew time test : %s",
 				  cred.info.principal,
 				  auks_strerror(fstatus));
 			goto sleep;
 		}
 
-
-		/* call add function for the auks cred */
+		/* call renew function for the auks cred */
 		fstatus = auks_api_renew_auks_cred(engine,&cred,mode);
 		if ( fstatus == AUKS_SUCCESS )
 			auks_log3("auks cred renewed using %s",

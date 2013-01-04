@@ -114,7 +114,7 @@ main(int argc,char** argv)
 	char* progname;
 	char* optstring="dvhf:H:pagrDC:u:R:";
 	char* short_options_desc="\nUsage : %s [-h] [-dv] [-f conffile] \
-[-C ccache] [-p|a|g|r|D] [-R once|loop] [-u uid] \n\n";
+[-C ccache] [-p|a|g|r|D] [-R once|loop|force] [-u uid] \n\n";
 	char* addon_options_desc="\
 \t-h\t\tshow this message\n\
 \t-d\t\tincrease debug level\n\
@@ -189,6 +189,8 @@ main(int argc,char** argv)
 				renew_mode = AUKS_API_RENEW_ONCE ;
 			else if(strncmp(optarg,"loop",5)==0)
 				renew_mode = AUKS_API_RENEW_LOOP ;
+			else if(strncmp(optarg,"force",6)==0)
+				renew_mode = AUKS_API_RENEW_FORCE ;
 			else {
 				fprintf(stdout,short_options_desc,progname);
 				fprintf(stdout,"%s\n",addon_options_desc);

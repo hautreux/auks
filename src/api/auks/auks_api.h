@@ -81,6 +81,7 @@
 
 #define AUKS_API_RENEW_ONCE    0
 #define AUKS_API_RENEW_LOOP    1
+#define AUKS_API_RENEW_FORCE   2
 
 /*!
  * \brief Initialise the Auks API
