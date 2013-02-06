@@ -18,8 +18,12 @@
 #  AUKS_PRIV_KEYTAB        : set the keytab file to use
 #                            default value is /etc/krb5.keytab
 #
+#  AUKS_PRIV_KEYTAB_BIS    : set the second keytab file to use in case
+#                            the first one is not valid
+#                            default value is /etc/krb5.keytab.last
+#
 #  AUKS_PRIV_PRINC         : set the krb5 principal name
-#                            default value is the first princ found in 
+#                            default value is the first princ found in
 #                            the keytab
 #
 #  AUKS_PRIV_CCACHE_APPEND : set the string to append to ccache pattern
@@ -140,6 +144,10 @@ if [[ -z ${AUKS_PRIV_KEYTAB} ]]
     then
     AUKS_PRIV_KEYTAB=/etc/krb5.keytab
 fi
+if [[ -z ${AUKS_PRIV_KEYTAB_BIS} ]]
+    then
+    AUKS_PRIV_KEYTAB_BIS=${AUKS_PRIV_KEYTAB}.last
+fi
 if [[ -z ${AUKS_PRIV_PRINC} ]]
     then
     AUKS_PRIV_PRINC=$(klist -kt ${AUKS_PRIV_KEYTAB} \
@@ -195,15 +203,15 @@ else
 fi
 if [[ -n ${AUKS_PRIV_USER} ]] && \
     [[ -n ${AUKS_PRIV_KEYTAB} ]] && \
+    [[ -n ${AUKS_PRIV_KEYTAB_BIS} ]] && \
     [[ -n ${AUKS_PRIV_PRINC} ]] && \
     [[ -n ${AUKS_PRIV_LIFETIME} ]] && \
     [[ -n ${AUKS_PRIV_RENEW_INT} ]] && \
     [[ -n ${AUKS_PRIV_KINIT_TIMEOUT} ]]
     then
-
-    while [ 1 -eq 1 ]
+     while [ 1 -eq 1 ]
       do
-    
+
       ccache="/tmp/krb5cc_$(id -u ${AUKS_PRIV_USER})${AUKS_PRIV_CCACHE_APPEND}"
 
 
@@ -213,36 +221,53 @@ if [[ -n ${AUKS_PRIV_USER} ]] && \
 	  ${LOGGER} "unable to touch ccache"
 	  exit 1
       fi
-      
+
       chmod 0600 ${ccache} 2>/dev/null
       if [ $? -ne 0 ]
 	  then
 	  ${LOGGER} "unable to set ccache mode to 0600"
 	  exit 1
       fi
-      
+
       chown ${AUKS_PRIV_USER} ${ccache} 2>/dev/null
       if [ $? -ne 0 ]
 	  then
 	  ${LOGGER} "unable to set ccache user to ${AUKS_PRIV_USER}"
 	  exit 1
       fi
-      
-      ERROR=$(${timeout_cmd} -s9 ${AUKS_PRIV_KINIT_TIMEOUT} ${kinit_cmd} -l ${AUKS_PRIV_LIFETIME} -c ${ccache} \
+
+      ERROR=$(${timeout_cmd} -s9 ${AUKS_PRIV_KINIT_TIMEOUT} ${kinit_cmd} \
+	  -l ${AUKS_PRIV_LIFETIME} -c ${ccache} \
 	  -kt ${AUKS_PRIV_KEYTAB} ${AUKS_PRIV_PRINC} 2>&1 >/dev/null)
-      if [ $? -ne 0 ]
-	  then
+      status=$?
+      if [ ${status} -ne 0 ] && [[ ! -f ${AUKS_PRIV_KEYTAB_BIS} ]]
+      then
 	  ${LOGGER} "unable to get ccache for ${AUKS_PRIV_PRINC} using \
 	      ktfile ${AUKS_PRIV_KEYTAB} : ${ERROR}"
 	  sleep ${AUKS_PRIV_ERROR_INT}
 	  continue
+      elif [ ${status} -ne 0 ]
+      then
+         ERROR=$(${kinit_cmd} -l ${AUKS_PRIV_LIFETIME} -c ${ccache} \
+             -kt ${AUKS_PRIV_KEYTAB_BIS} ${AUKS_PRIV_PRINC} 2>&1 >/dev/null)
+         status=$?
+         if [ ${status} -ne 0 ]
+         then
+             ${LOGGER} "unable to get ccache for ${AUKS_PRIV_PRINC} using \
+             backup ktfile ${AUKS_PRIV_KEYTAB_BIS} : ${ERROR}"
+             sleep ${AUKS_PRIV_ERROR_INT}
+             continue
+         else
+             ${LOGGER} "ccache build for ${AUKS_PRIV_PRINC} using \
+             backup ktfile ${AUKS_PRIV_KEYTAB_BIS}"
+         fi
       else
 	  ${LOGGER} "ccache build for ${AUKS_PRIV_PRINC} using \
-	      ${AUKS_PRIV_KEYTAB}"
+	      ktfile ${AUKS_PRIV_KEYTAB}"
       fi
-      
+
       sleep ${AUKS_PRIV_RENEW_INT}
-      
+
     done
 
 else
