@@ -1,4 +1,5 @@
 auks-0.4.1 (ongoing)
+	* aukspriv: add backup keytab feature to ease rolling keytab upgrade
 	* auks: add "-P pfprinc" argument to perform local TGS prefetching
 	* api: add auks_api_prefetch_tgs call to perform local TGS prefetching
 	* auks: modify verbosity behavior of auks command line clients
