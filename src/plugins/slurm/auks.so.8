@@ -40,7 +40,7 @@ The credential must also correspond to a principal associated
 with the \fBAUKS admin role\fR in the \fBauksd\fR ACL file \fBauks.acl\fR.
 
 .LP
-\fBslurmstepd\fR, during SPANK temporary privileges drop, launches a crendential
+\fBslurmstepd\fR, during SPANK temporary privileges drop, launches a credential
 renewer that is killed at the end of the step, prior credential removal.
 Renewal is attempted as long as the credential is valid, first using \fBAUKS\fR 
 daemons (requires that user principal is associated to \fBAUKS user role\fR), then 
@@ -80,6 +80,17 @@ The default is \fB0\fR, which allows every user on the system to use auks.
 When set to a valid KRB5CCNAME entry, the privileged slurmstepd sections of
 the plugin will use the content of this credential cache to secure auks
 admin requests.
+.LP
+.TP
+\fBsync=mode\fR
+when set to \fByes\fR or \fBall\fR, automatically sync file systems before
+stopping ticket renewer and/or removing the kerberos credential.
+With kerberized file systems, this can prevent from losing data in case 
+dirty pages flush is deferred to a moment when no valid ticket for the user
+can be found on the system.
+Note that this can cause performance degradation and delay the termination of
+the step. The default mode is \fBno\fR to disable the feature. Available modes
+are \fByes\fR|\fBall\fR to flush every FS using sync().
 
 .SH "COPYING"
 .LP
@@ -151,4 +162,4 @@ knowledge of the CeCILL-C license and that you accept its terms.
 .BR auksd (8),
 .BR auks.acl (5),
 .BR aukspriv (8)
-
+.BR sync (2)
