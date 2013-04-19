@@ -117,6 +117,7 @@ SPANK_PLUGIN(auks, 1);
 static char auks_credcache[CREDCACHE_MAXLENGTH];
 
 static char* auks_conf_file = NULL;
+static char* auks_sync_mode = NULL;
 
 static char* auks_hostcredcache_file = NULL;
 
@@ -141,7 +142,7 @@ struct spank_option spank_opts[] =
 };
 int _parse_plugstack_conf (spank_t sp, int ac, char *av[]);
 int _spank_auks_get_current_mode(spank_t sp, int ac, char *av[]);
-
+int _sync_fs();
 
 /* srun/sbatch : forward client credential to auks daemon */
 int spank_auks_local_user_init (spank_t sp, int ac, char **av);
@@ -151,7 +152,6 @@ int spank_auks_remote_init (spank_t sp, int ac, char *av[]);
 
 /* slurmstepd : remove user localy stored credential */
 int spank_auks_remote_exit (spank_t sp, int ac, char **av);
-
 
 /*
  *
@@ -238,6 +238,11 @@ slurm_spank_task_exit (spank_t sp, int ac, char **av)
 				return (-1);
 			}
 			
+			/* sync all/some file systems to ensure dirty pages flush 
+			   while we are sure to still have a ticket to do that 
+			   (see _sync_fs method for more details) */
+			_sync_fs();
+
 			/* kill the renewer process */
 			kill(renewer_pid,SIGTERM);
 			
@@ -566,6 +571,11 @@ spank_auks_remote_exit (spank_t sp, int ac, char **av)
 		return (-1);
 	}
 
+	/* sync all/some file systems to ensure dirty pages flush 
+	   while we are sure to still have a ticket to do that 
+	   (see _sync_fs method for more details) */
+	_sync_fs();
+
 	/* remove credential cache */
 	fstatus = unlink(auks_credcache);
 	if ( fstatus != 0 ) {
@@ -578,6 +588,10 @@ spank_auks_remote_exit (spank_t sp, int ac, char **av)
 	/* replace privileged uid/gid */
 	seteuid(getuid());
 	setegid(getgid());
+
+	/* free auks sync mode if needed */
+	if ( auks_sync_mode != NULL )
+		free(auks_sync_mode);
 
 	return 0;
 }
@@ -686,6 +700,9 @@ _parse_plugstack_conf (spank_t sp, int ac, char *av[])
 		if ( strncmp(elt,"conf=",5) == 0 ) {
 			auks_conf_file=strdup(elt+5);	
 		}
+		else if ( strncmp(elt,"sync=",5) == 0 ) {
+			auks_sync_mode=strdup(elt+5);
+		}
 		else if (strncmp ("default=enabled", av[i], 15) == 0) {
 		        auks_mode = AUKS_MODE_ENABLED;
 		}
@@ -712,4 +729,43 @@ _parse_plugstack_conf (spank_t sp, int ac, char *av[])
 	}
 	
 	return (0);
+}
+
+/* 
+ * Parameterized synchronization of FS page cache
+ *
+ * With kerberized FS, asynchronous dirty pages flush is a problem.
+ * Indeed, if no kerberos ticket is available when the flush occurs, 
+ * the operation fails resulting in incomplete files and data losses.
+ *
+ * We thus need to ensure that Kerberized FS dirty pages are flushed
+ * before removing a ticket which can potentially be the last valid
+ * one for the user the dirty pages belong to.
+ *
+ * Note that as a ticket has a limited validity and a sync operation can 
+ * potentially takes a long time, if a ticket renewer ensures the renewal
+ * of the ticket, it must persist while the sync operation occurs to ensure
+ * that the ticket will be kept valid during the flush timelapse.
+ */
+int
+_sync_fs() {
+
+	int rc = 0;
+	char* mode = auks_sync_mode;
+
+	static int done = 0;
+
+	/* only perform the sync operation once and only if requested */
+	if (done || mode == NULL)
+		return rc;
+
+	if ( strncmp(mode,"yes",4) == 0 ||
+	     strncmp(mode,"all",4) == 0 ) {
+		/* default behavior is to sync() everything */
+		xinfo("calling sync() to force dirty pages flush");
+		sync();
+	}
+
+	done = 1;
+	return rc;
 }
