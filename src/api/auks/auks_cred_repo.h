@@ -289,6 +289,7 @@ auks_cred_repo_renewer_credfile(auks_cred_repo_t * cr,int id,
  * \retval AUKS_ERROR
  * \retval AUKS_ERROR_CRED_REPO_MUTEX_LOCK
  * \retval AUKS_ERROR_LIBRARY_ADD
+ * \retval AUKS_ERROR_LIBRARY_UID_TO_STR
  * \retval AUKS_ERROR_CRED_REPO_CCACHE_BUILD
  * \retval see auks_krb5_cred_store
  *
@@ -307,6 +308,7 @@ int auks_cred_repo_add_nolock(auks_cred_repo_t * cred_repo, auks_cred_t * cred);
  * \retval AUKS_ERROR
  * \retval AUKS_ERROR_CRED_REPO_MUTEX_LOCK
  * \retval AUKS_ERROR_LIBRARY_UID_NOT_FOUND
+ * \retval AUKS_ERROR_LIBRARY_UID_TO_STR
  *
  */
 int
@@ -324,6 +326,7 @@ auks_cred_repo_get_nolock(auks_cred_repo_t * cred_repo,
  * \retval AUKS_ERROR
  * \retval AUKS_ERROR_CRED_REPO_MUTEX_LOCK
  * \retval AUKS_ERROR_LIBRARY_UID_NOT_FOUND
+ * \retval AUKS_ERROR_LIBRARY_UID_TO_STR
  * \retval AUKS_ERROR_CRED_REPO_CCACHE_BUILD
  * \retval AUKS_ERROR_CRED_REPO_UNLINK
  *

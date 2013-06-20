@@ -103,6 +103,9 @@ auks_strerror(int error)
 	case AUKS_ERROR_LIBRARY_ADD :
 		return "auks library : " "unable to add cred to library" ;
 		break ;
+	case AUKS_ERROR_LIBRARY_UID_TO_STR :
+		return "auks library : " "cred uid to uid_str failure" ;
+		break ;
 
 	/* -- BUFFER */
 	case AUKS_ERROR_BUFFER_MALLOC :

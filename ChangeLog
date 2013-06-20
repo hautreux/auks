@@ -6,7 +6,8 @@ auks-0.4.1 (ongoing)
 	  patch from Nacho Barrientos, CERN)
 	* code cleaning for cppcheck usage
 	* auks SLURM Spank plugin: add sync=mode conf pragma (cf man auks.so)
-
+	* libauksapi: correct a bug in uid management greater than 999999999
+	
 10/07/2010 Matthieu Hautreux <matthieu.hautreux@cea.fr>
 	
 	* auks-0.4.0-1

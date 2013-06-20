@@ -101,6 +101,8 @@ extern int errno;
 #include "auks/auks_log.h"
 
 #define STR_ERROR_SIZE 128
+#define UID_STR_LENGTH 32
+
 #define DUMP_ERROR(e,s,S) if(strerror_r(e,s,S)) { s[0]='-';s[1]='\0';}
 
 /* free cred dynamic content */
@@ -416,7 +418,7 @@ auks_cred_repo_add_nolock(auks_cred_repo_t * cr, auks_cred_t * cred)
 	int fstatus;
 
 	uid_t uid;
-	char uid_str[10];
+	char uid_str[UID_STR_LENGTH];
 
 	char filename[AUKS_CRED_FILE_MAX_LENGTH + 1];
 
@@ -455,7 +457,12 @@ auks_cred_repo_add_nolock(auks_cred_repo_t * cr, auks_cred_t * cred)
 
 add_stage:
 	/* set reference value */
-	sprintf(uid_str, "%d", uid);
+	if ( snprintf(uid_str, UID_STR_LENGTH, "%u", uid) >= UID_STR_LENGTH ) {
+		auks_log2("add : unable to build uid='%u' str representation",
+			  uid);
+		fstatus = AUKS_ERROR_LIBRARY_UID_TO_STR;
+		goto exit;
+	}
 
 	/* add cred to library */
 	fstatus = xlibrary_add_item(&(cr->library), uid_str,
@@ -498,12 +505,17 @@ int
 auks_cred_repo_get_nolock(auks_cred_repo_t * cr,uid_t uid, auks_cred_t * cred)
 {
 	int fstatus;
-	
-	char uid_str[10];
-	
+
+	char uid_str[UID_STR_LENGTH];
+
 	/* set reference value */
-	sprintf(uid_str, "%d", uid);
-	
+	if ( snprintf(uid_str, UID_STR_LENGTH, "%u", uid) >= UID_STR_LENGTH ) {
+		auks_log2("add : unable to build uid='%u' str representation",
+			  uid);
+		fstatus = AUKS_ERROR_LIBRARY_UID_TO_STR;
+		return fstatus;
+	}
+
 	/* try to get cred from library */
 	fstatus = xlibrary_get_item(&(cr->library), uid_str,
 				    cred, sizeof(auks_cred_t));
@@ -516,7 +528,7 @@ auks_cred_repo_get_nolock(auks_cred_repo_t * cr,uid_t uid, auks_cred_t * cred)
 			  uid);
 		fstatus = AUKS_SUCCESS;
 	}
-	
+
 	return fstatus;
 }
 
@@ -528,7 +540,7 @@ auks_cred_repo_remove_nolock(auks_cred_repo_t * cr, uid_t uid)
 	char str_error[STR_ERROR_SIZE];
 	str_error[0] = '\0';
 
-	char uid_str[10];
+	char uid_str[UID_STR_LENGTH];
 
 	char filename[AUKS_CRED_FILE_MAX_LENGTH + 1];
 
@@ -541,7 +553,13 @@ auks_cred_repo_remove_nolock(auks_cred_repo_t * cr, uid_t uid)
 	}
 
 	/* set reference value */
-	sprintf(uid_str, "%d", uid);
+	if ( snprintf(uid_str, UID_STR_LENGTH, "%u", uid) >= UID_STR_LENGTH ) {
+		auks_log2("add : unable to build uid='%u' str representation",
+			  uid);
+		fstatus = AUKS_ERROR_LIBRARY_UID_TO_STR;
+		goto exit;
+	}
+
 
 	/* try to remove cred from library */
 	fstatus = xlibrary_remove_item(&(cr->library), uid_str);

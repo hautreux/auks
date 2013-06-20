@@ -91,6 +91,7 @@ const char * auks_strerror(int error) ;
 #define AUKS_ERROR_LIBRARY_INIT                   -100001
 #define AUKS_ERROR_LIBRARY_UID_NOT_FOUND          -100002
 #define AUKS_ERROR_LIBRARY_ADD                    -100003
+#define AUKS_ERROR_LIBRARY_UID_TO_STR             -100004
 
 /* -- BUFFER */
 #define AUKS_ERROR_BUFFER_MALLOC                  -100101
