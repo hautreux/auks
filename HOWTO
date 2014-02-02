@@ -1,0 +1,465 @@
+This is a short HOWTO explaining how to set up a simple solution using AUKS and Slurm.
+
+A working solution requires 3 types of nodes :
+
+   - a management node, on which the auks repository will be set up and managed
+   - a login node (or several), on which users will submit their Slurm jobs
+   - a compute node (or several), on which Slurm will launch the jobs on users behalf with auks support
+
+It is possible to use a single node but the design was made with these 3 types
+in mind, so it is better to describe the set up with 3 nodes.
+
+> Required Auks components
+
+    - on the management node :
+      - auks RPM package as it provides :
+        * auksd, the central repository
+    	* auksdrenewer, the component that will renew credentials stored in
+	  auksd to prevent expired credentials
+    	* aukspriv, the component that will ensure that a credential cache is
+	  accessible to auksdrenewer for proper renew logic
+
+    - on the login node :
+      - auks RPM package as it provides :
+        * auks client API
+      - auks-slurm RPM package as it provides :
+        * Auks Slurm SPANK plugin to add Kerberos credential support
+
+    - on the compute node :
+      - auks RPM package as it provides :
+        * auks client API
+    	* aukspriv, the component that will ensure that a credential cache is
+	  accessible to slurmd for proper credential get action during job
+	  launch logic using
+      - auks-slurm RPM package as it provides :
+        * Auks Slurm SPANK plugin to add Kerberos credential support
+
+> Auks SLURM Spank plugin
+
+    The Auks Spank plugin for SLURM is used for both user credential
+    transmission on the auks repository from a login node and for user
+    credential retrieval from a compute node by the slurmd daemon.
+
+    When configured in Slurm, a new --auks=[yes|no|done] parameter is available
+    to salloc/srun and sbatch commands. 'yes' means activate credential 
+    submission and retrieval, 'no' means no credential management and 'done'
+    means retrieval only.
+
+> Kerberos identities examples
+
+    - nodes identities :
+        - management node : host/mngt.realm.a@REALM.A
+	- login node : host/login.realm.a@REALM.A
+    	- compute node : host/compute.realm.a@REALM.A
+
+    - users identities : alice@REALM.A, bob@REALM.A, ...
+
+> Auks component installation and configuration
+
+    - management node :
+
+      - installation
+
+    # yum install auks
+    # chkconfig auksd on
+    # chkconfig auksdrenewer on
+    # chkconfig aukspriv on
+
+      - configuration
+
+	* auksd
+
+	The auks daemon is configured using 2 distinct files, auks.conf and
+	auksd.acl.
+
+	auks.conf is the file to configure the behavior of the daemon as well as
+	the communication and servers identities informations. The two parts
+	that are interesting in this file for auksd are the "common" and the
+	"auksd" part.
+
+	auksd.acl is the file to configure the ACLs that will be used by the
+	auks daemon when it is invoked by clients. It defines the roles
+	associated to the clients and as a result the clients rights (add,get,
+	remove, dump)
+
+	The "common" and "auksd" parts of the auks.conf in our scenario is :
+
+	/!\ Note /!\ auks.conf file can be used on all the nodes involved in an
+	auks architecture, only the interesing parts are presented here, the ...
+	corresponds to additional material in the file.
+
+    # cat /etc/auks/auks.conf
+    common {
+     # Primary daemon configuration
+     PrimaryHost        =   "mngt" ;
+     PrimaryPort        =   12345 ;
+     PrimaryPrincipal   =   "host/mngt.realm.a/REALM.A";
+     # Enable/Disable NAT traversal support (yes/no)
+     # this value must be the same on every nodes
+     NAT                =   yes ;
+     # max connection retries number
+     Retries            =    3 ;
+     # connection timeout
+     Timeout            =   10 ;
+     # delay in seconds between retries
+     Delay              =    3 ;
+    }
+    ...
+    auksd {
+     # Primary daemon configuration
+     PrimaryKeytab      =   "/etc/krb5.keytab" ;
+     # log file and level
+     LogFile            =   "/var/log/auksd.log" ;
+     LogLevel           =   "2" ;
+     # optional debug file and level
+     DebugFile          =   "/var/log/auksd.log" ;
+     DebugLevel         =   "0" ;
+     # directory in which daemons store the creds
+     CacheDir           =   "/var/cache/auks" ;
+     # ACL file for cred repo access authorization rules
+     ACLFile            =   "/etc/auks/auksd.acl" ; 
+     # default size of incoming requests queue
+     # it grows up dynamically
+     QueueSize          =   500 ;
+     # default repository size (number of creds)
+     # it grows up dynamicaly
+     RepoSize           =   1000 ;
+     # number of workers for incoming request processing
+     Workers            =   1000 ;
+     # delay in seconds between 2 repository clean stages
+     CleanDelay         =   300 ;
+     # use kerberos replay cache system (slow down)
+     ReplayCache        =   no ;
+    }
+    ...
+    #
+
+        The auksd.acl in our scenario is :
+
+    # cat /etc/auks/auksd.acl
+    rule {
+            principal = ^host/mngt.realm.a/REALM.A$ ;
+            host = * ;
+            role = admin ;
+    }
+    rule {
+            principal = ^host/compute.realm.a/REALM.A$ ;
+            host = * ;
+            role = admin ;
+    }
+    rule {
+            principal = ^[[:alnum:]]*/REALM.A$ ;
+            host = * ;
+            role = user ;
+    }
+    #
+
+        * auksdrenewer
+
+	The auksdrenewer daemon is configured using auks.conf too. It uses the
+	"common" and the "auksdrenewer" part of the file that are in our
+	scenario :
+
+	/!\ Note /!\ auks.conf file can be used on all the nodes involved in an
+	auks architecture, only the interesing parts are presented here, the ...
+	corresponds to additional material in the file.
+
+    # cat /etc/auks/auks.conf
+    common {
+     # Primary daemon configuration
+     PrimaryHost        =   "mngt" ;
+     PrimaryPort        =   12345 ;
+     PrimaryPrincipal   =   "host/mngt.realm.a/REALM.A";
+     # Enable/Disable NAT traversal support (yes/no)
+     # this value must be the same on every nodes
+     NAT                =   yes ;
+     # max connection retries number
+     Retries            =    3 ;
+     # connection timeout
+     Timeout            =   10 ;
+     # delay in seconds between retries
+     Delay              =    3 ;
+    }
+    ...
+    renewer {
+     # log file and level
+     LogFile            =   "/var/log/auksdrenewer.log" ;
+     LogLevel           =   "1" ;
+     # optional debug file and level
+     DebugFile          =   "/var/log/auksdrenewer.log" ;
+     DebugLevel         =   "0" ;
+     # delay between two renew loops
+     Delay              = "60" ;
+     # Min Lifetime for credentials to be renewed
+     # This value is also used as the grace trigger to renew creds
+     MinLifeTime        = "600" ;
+    }
+    ...
+    #
+
+        * aukspriv
+
+	The aukspriv daemon is configured using the /etc/sysconfig/aukspriv file.
+	An empty file lets the aukspriv service act with default value that
+	correspond to doing a kinit using /etc/krb5.keytab periodically and store
+	the result in the root credential cache. This is the intended behavior
+	for ou scenario.
+
+      - component starts and tests
+
+    # service aukspriv start
+    Starting aukspriv:                                         [  OK  ]
+    # service auksd start
+    Starting auksd:                                            [  OK  ]
+    # service auksdrenewer start
+    Starting auksdrenewer:                                     [  OK  ]
+    # klist
+    Ticket cache: FILE:/tmp/krb5cc_0
+    Default principal: host/mngt.realm.a@REALM.A
+    
+    Valid starting     Expires            Service principal
+    02/02/11 22:48:17  02/03/11 08:48:17  krbtgt/REALM.A@REALM.A
+            renew until 02/09/11 22:48:17
+    # auks -p
+    Auks API request succeed
+    # klist
+    Ticket cache: FILE:/tmp/krb5cc_0
+    Default principal: host/mngt.realm.a@REALM.A
+    
+    Valid starting     Expires            Service principal
+    02/02/11 22:48:17  02/03/11 08:48:17  krbtgt/REALM.A@REALM.A
+            renew until 02/09/11 22:48:17
+    02/02/11 22:48:30  02/03/11 08:48:17  host/mngt.realm.a@REALM.A
+    	    renew until 02/09/11 22:48:17
+    #
+
+
+    - login node :
+
+      - installation
+
+    # yum install auks auks-slurm
+
+      - configuration
+
+        * auks API
+
+	The Auks API is configured using the "common" and the "api" parts
+	of the /etc/auks/auks.conf file. 
+
+	In our scenario, these parts are :
+
+	/!\ Note /!\ auks.conf file can be used on all the nodes involved in an
+	auks architecture, only the interesing parts are presented here, the ...
+	corresponds to additional material in the file.
+
+    # cat /etc/auks/auks.conf
+    common {
+     # Primary daemon configuration
+     PrimaryHost        =   "mngt" ;
+     PrimaryPort        =   12345 ;
+     PrimaryPrincipal   =   "host/mngt.realm.a/REALM.A";
+     # Enable/Disable NAT traversal support (yes/no)
+     # this value must be the same on every nodes
+     NAT                =   yes ;
+     # max connection retries number
+     Retries            =    3 ;
+     # connection timeout
+     Timeout            =   10 ;
+     # delay in seconds between retries
+     Delay              =    3 ;
+    }
+    ...
+    api {
+     # log file and level
+     LogFile            =   "/tmp/auksapi.log" ;
+     LogLevel           =   "0" ;
+     # optional debug file and level
+     DebugFile          =   "/tmp/auksapi.log" ;
+     DebugLevel         =   "0" ;
+    }
+    ...
+    #
+
+        * auks spank plugin for SLURM
+
+	The Auks spank plugin is configured in slurm using the 
+	/etc/slurm/plugstack.conf.
+
+	In our scenario, this gives :
+
+    # cat /etc/slurm/plugstack.conf
+    include /etc/slurm/plugstack.conf.d/*.conf
+    # cat /etc/slurm/plugstack.conf.d/auks.conf
+    optional auks.so default=enabled spankstackcred=yes minimum_uid=1024
+    #
+
+      - component tests
+
+    $ whoami
+    bob
+    $ klist
+    Ticket cache: FILE:/tmp/krb5cc_2000_wTwNF20421
+    Default principal: bob@REALM.A
+    
+    Valid starting     Expires            Service principal
+    02/02/11 23:06:21  02/03/11 23:06:09  krbtgt/REALM.A@REALM.A
+        renew until 02/09/11 23:06:09
+    $ auks -p
+    Auks API request succeed
+    $ klist
+    Ticket cache: FILE:/tmp/krb5cc_2000_wTwNF20421
+    Default principal: bob@REALM.A
+    
+    Valid starting     Expires            Service principal
+    02/02/11 23:06:21  02/03/11 23:06:09  krbtgt/REALM.A@REALM.A
+        renew until 02/09/11 23:06:09
+    02/02/11 23:06:21  02/03/11 23:06:09  host/mngt.realm.a@REALM.A
+        renew until 02/09/11 23:06:09
+    $ auks -a
+    Auks API request succeed
+    $ srun --help | grep auks
+          --auks=[yes|no|done]    kerberos credential forwarding using Auks
+    $
+
+
+    - compute node :
+
+      - installation
+
+    # yum install auks auks-slurm
+    # chkconfig aukspriv on
+
+      - configuration
+
+        * auks API
+
+	The Auks API is configured using the "common" and the "api" parts
+	of the /etc/auks/auks.conf file. 
+
+	In our scenario, these parts are :
+
+	/!\ Note /!\ auks.conf file can be used on all the nodes involved in an
+	auks architecture, only the interesing parts are presented here, the ...
+	corresponds to additional material in the file.
+
+    # cat /etc/auks/auks.conf
+    common {
+     # Primary daemon configuration
+     PrimaryHost        =   "mngt" ;
+     PrimaryPort        =   12345 ;
+     PrimaryPrincipal   =   "host/mngt.realm.a/REALM.A";
+     # Enable/Disable NAT traversal support (yes/no)
+     # this value must be the same on every nodes
+     NAT                =   yes ;
+     # max connection retries number
+     Retries            =    3 ;
+     # connection timeout
+     Timeout            =   10 ;
+     # delay in seconds between retries
+     Delay              =    3 ;
+    }
+    ...
+    api {
+     # log file and level
+     LogFile            =   "/tmp/auksapi.log" ;
+     LogLevel           =   "0" ;
+     # optional debug file and level
+     DebugFile          =   "/tmp/auksapi.log" ;
+     DebugLevel         =   "0" ;
+    }
+    ...
+    #
+
+        * auks spank plugin for SLURM
+
+	The Auks spank plugin is configured in slurm using the 
+	/etc/slurm/plugstack.conf.
+
+	In our scenario, this gives :
+
+    # cat /etc/slurm/plugstack.conf
+    include /etc/slurm/plugstack.conf.d/*.conf
+    # cat /etc/slurm/plugstack.conf.d/auks.conf
+    optional auks.so default=enabled spankstackcred=yes minimum_uid=1024
+    #
+
+        * aukspriv
+
+	The aukspriv daemon is configured using the /etc/sysconfig/aukspriv file.
+	An empty file lets the aukspriv service act with default value that
+	correspond to doing a kinit using /etc/krb5.keytab periodically and store
+	the result in the root credential cache. This is the intended behavior
+	for ou scenario.
+
+      - component starts and tests
+
+    # service aukspriv start
+    Starting aukspriv:                                         [  OK  ]
+    # klist
+    Ticket cache: FILE:/tmp/krb5cc_0
+    Default principal: host/compute.realm.a@REALM.A
+    
+    Valid starting     Expires            Service principal
+    02/02/11 23:13:26  02/03/11 09:13:26  krbtgt/REALM.A@REALM.A
+            renew until 02/09/11 23:13:26
+    # auks -a
+    Auks API request succeed
+    # klist
+    Ticket cache: FILE:/tmp/krb5cc_0
+    Default principal: host/compute.realm.a@REALM.A
+    
+    Valid starting     Expires            Service principal
+    02/02/11 23:13:26  02/03/11 09:13:26  krbtgt/REALM.A@REALM.A
+            renew until 02/09/11 23:13:26
+    02/02/11 23:14:28  02/03/11 09:13:26  host/mngt.realm.a@REALM.A
+            renew until 02/09/11 23:13:26
+    # id bob -u
+    2000
+    # auks -g -u 2000 -C /tmp/auks.tmp
+    Auks API request succeed
+    # klist -c /tmp/auks.tmp 
+    Ticket cache: FILE:/tmp/auks.tmp
+    Default principal: bob@REALM.A
+    
+    Valid starting     Expires            Service principal
+    02/02/11 23:08:54  02/03/11 23:06:09  krbtgt/REALM.A@REALM.A
+            renew until 02/09/11 23:06:09
+    # 
+
+
+
+    Required components are now ready.
+
+
+> Auks usage with SLURM
+
+
+  It is now possible to launch a job with kerberos credential support :
+
+    $ whoami
+    bob
+    $ klist
+    Ticket cache: FILE:/tmp/krb5cc_2000_wTwNF20421
+    Default principal: bob@REALM.A
+    
+    Valid starting     Expires            Service principal
+    02/02/11 23:06:21  02/03/11 23:06:09  krbtgt/REALM.A@REALM.A
+        renew until 02/09/11 23:06:09
+    02/02/11 23:06:21  02/03/11 23:06:09  host/mngt.realm.a@REALM.A
+        renew until 02/09/11 23:06:09
+    $ srun klist
+    Ticket cache: FILE:/tmp/krb5cc_2000_3021_oNvcub
+    Default principal: bob@REALM.A
+    
+    Valid starting     Expires            Service principal
+    02/02/11 23:21:05  02/03/11 23:06:09  krbtgt/mngt.realm.a@REALM.A
+            renew until 02/09/11 23:06:09
+    $ auks -r
+    Auks API request succeed
+    $ srun --auks=done klist
+    slurmd[compute]: spank-auks: unable to get user 2000 cred : auks api : reply seems corrupted
+    klist: No credentials cache found (ticket cache FILE:/tmp/krb5cc_2000_wTwNF20421)
+    srun: error: compute: task 0: Exited with exit code 1
+    $ 
+
