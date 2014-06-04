@@ -239,8 +239,9 @@ renewer_main_function(auks_engine_t* engine,int* pr)
 			continue;
 		}
 
-		/* renew it in an adressless one */
-		fstatus = auks_cred_renew(acred,1);
+		/* renew it, without specifying an adressless one, it should 
+		 * already be the case */
+		fstatus = auks_cred_renew(acred,0);
 		if ( fstatus != AUKS_SUCCESS ) {
 			auks_log2("%s's cred can not be renewed in an "
 				  "addressless one : %s",
