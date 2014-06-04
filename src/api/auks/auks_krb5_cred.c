@@ -127,7 +127,7 @@ auks_krb5_cred_get(char *ccachefilename,char **pbuffer,
 	if (err_code) {
 		auks_error("unable to initialize kerberos context : %s",
 			   error_message(err_code));
-		fstatus = AUKS_ERROR_KRB5_CRED_INIT_CTX ; 
+		fstatus = AUKS_ERROR_KRB5_CRED_INIT_CTX ;
 		goto exit;
 	}
 	auks_log("kerberos context successfully initialized");
@@ -171,7 +171,7 @@ auks_krb5_cred_get(char *ccachefilename,char **pbuffer,
 		}
 	}
 	while (!err_code);
-	
+
 	/* stop credential cache sequential reading */
 	err_code = krb5_cc_end_seq_get(context,ccache,&cc_cursor);
 	if (err_code) {
@@ -180,7 +180,7 @@ auks_krb5_cred_get(char *ccachefilename,char **pbuffer,
 	} else
 		auks_log("credential cache sequential read "
 			 "successfully stopped");
-	
+
 	/* extract credential if a TGT was found */
 	if (!read_cred_is_tgt) {
 		auks_error("no TGT found in credential cache");
@@ -188,7 +188,7 @@ auks_krb5_cred_get(char *ccachefilename,char **pbuffer,
 		goto seq_exit;
 	}
 	auks_log("TGT found in credential cache");
-		
+
 	/* initialize a nullified kerberos authentication context in order */
 	/* to serialize credential into buffer */
 	err_code = krb5_auth_con_init(context,&auth_context);
@@ -199,10 +199,10 @@ auks_krb5_cred_get(char *ccachefilename,char **pbuffer,
 		goto seq_exit;
 	}
 	auks_log("kerberos authentication context successfully initialized");
-			
+
 	/* clear kerberos authentication context flags */
 	krb5_auth_con_setflags(context,auth_context,0);
-			
+
 	/* extract credential data */
 	err_code = krb5_mk_1cred(context,auth_context,&read_cred,
 				 &p_outbuf,&krdata);
@@ -213,7 +213,7 @@ auks_krb5_cred_get(char *ccachefilename,char **pbuffer,
 		goto auth_ctx_exit;
 	}
 	auks_log("credential successfully dumped into buffer");
-		
+
 	/* allocate output buffer */
 	length = p_outbuf->length;
 	buffer = (char *) malloc(length * sizeof(char));
@@ -230,7 +230,7 @@ auks_krb5_cred_get(char *ccachefilename,char **pbuffer,
 	*plength = length;
 	auks_log("credential successfully stored in output buffer");
 	fstatus = AUKS_SUCCESS ;
-	
+
 cred_exit:
 	krb5_free_data(context,p_outbuf);
 
@@ -248,7 +248,7 @@ cc_exit:
 
 ctx_exit:
 	krb5_free_context(context);
-	
+
 exit:
 	return fstatus;
 }
@@ -274,7 +274,7 @@ auks_krb5_cred_store(char *cachefilename, char *buffer,
 	if (err_code) {
 		auks_error("unable to initialize kerberos context : %s",
 			   error_message(err_code));
-		fstatus = AUKS_ERROR_KRB5_CRED_INIT_CTX ; 
+		fstatus = AUKS_ERROR_KRB5_CRED_INIT_CTX ;
 		goto exit;
 	}
 	auks_log("kerberos context successfully initialized");
@@ -289,14 +289,14 @@ auks_krb5_cred_store(char *cachefilename, char *buffer,
 		goto ctx_exit;
 	}
 	auks_log("kerberos authentication context successfully initialized");
-	
+
 	/* clear kerberos authentication context flags */
 	krb5_auth_con_setflags(context, auth_context, 0);
-	
+
 	/* build a kerberos data structure with input buffer */
 	data.data = buffer;
 	data.length = buffer_length;
-	
+
 	/* build kerberos credential structure using this data structure */
 	err_code = krb5_rd_cred(context, auth_context, &data,&creds,&krdata);
 	if (err_code) {
@@ -304,10 +304,10 @@ auks_krb5_cred_store(char *cachefilename, char *buffer,
 			   error_message(err_code));
 		fstatus = AUKS_ERROR_KRB5_CRED_RD_CRED ;
 		goto auth_ctx_exit;
-		
+
 	}
 	auks_log("credential data successfully deserialized");
-		
+
 	/* resolve kerberos credential cache */
 	if (cachefilename == NULL)
 		err_code = krb5_cc_default(context,&ccache);
@@ -320,7 +320,7 @@ auks_krb5_cred_store(char *cachefilename, char *buffer,
 		goto cred_exit;
 	}
 	auks_log("credential cache successfully resolved");
-			
+
 	/* initialize kerberos credential structure */
 	err_code = krb5_cc_initialize(context,ccache,(*creds)->client);
 	if (err_code) {
@@ -328,10 +328,10 @@ auks_krb5_cred_store(char *cachefilename, char *buffer,
 			   error_message(err_code));
 		fstatus = AUKS_ERROR_KRB5_CRED_INIT_CC ;
 		goto cc_exit;
-		
+
 	}
 	auks_log("credential cache successfully initialized",cachefilename);
-		
+
 	/* store credential in credential cache */
 	err_code = krb5_cc_store_cred(context,ccache,*creds);
 	if (err_code) {
@@ -343,7 +343,7 @@ auks_krb5_cred_store(char *cachefilename, char *buffer,
 		fstatus = AUKS_SUCCESS ;
 	}
 
-cc_exit:	
+cc_exit:
 	krb5_cc_close(context, ccache);
 
 cred_exit:
@@ -355,7 +355,7 @@ auth_ctx_exit:
 
 ctx_exit:
 	krb5_free_context(context);
-	
+
 exit:
 	return fstatus;
 }
@@ -395,7 +395,7 @@ auks_krb5_cred_get_fwd(char *ccachefilename, char *serverName,
 	if (err_code) {
 		auks_error("unable to initialize kerberos context : %s",
 			   error_message(err_code));
-		fstatus = AUKS_ERROR_KRB5_CRED_INIT_CTX ; 
+		fstatus = AUKS_ERROR_KRB5_CRED_INIT_CTX ;
 		goto exit;
 	}
 	auks_log("kerberos context successfully initialized");
@@ -448,10 +448,10 @@ auks_krb5_cred_get_fwd(char *ccachefilename, char *serverName,
 	}
 	auks_log("serialized and crypted forwarded credential for %s "
 		 "successfully got from KDC",serverName);
-	
+
 	/* desactive replay detection */
 	krb5_auth_con_setflags(context,auth_context,0);
-	
+
 	/* decrypt (using session key stored in auth context) and */
 	/* unserialized forwarded credential in a kerberos credential */
 	/* structure */
@@ -466,7 +466,7 @@ auks_krb5_cred_get_fwd(char *ccachefilename, char *serverName,
 	}
 	auks_log("unserialization and decryption of forwarded "
 		 "credential for %s succesfully done",serverName);
-			
+
 	/* Reinitialize kerberos authentication context in order to */
 	/* write credential to output buffer */
 	krb5_auth_con_free(context,auth_context);
@@ -480,10 +480,10 @@ auks_krb5_cred_get_fwd(char *ccachefilename, char *serverName,
 	}
 	auks_log("kerberos connection authentication context "
 		 "reinitialization successfully done");
-				
+
 	/* no flags */
 	krb5_auth_con_setflags(context,auth_context,0);
-				
+
 	/* serialize forwarded credential (no encryption because auth */
 	/* context session key is nullified) */
 	err_code = krb5_mk_1cred(context,auth_context,*out_creds_array,
@@ -512,13 +512,13 @@ auks_krb5_cred_get_fwd(char *ccachefilename, char *serverName,
 			 "in output buffer");
 		fstatus	= AUKS_SUCCESS ;
 	}
-	
+
 	krb5_free_data(context,p_outbuf);
 
 rd_cred_exit:
 	krb5_free_creds(context,*out_creds_array);
 	free(out_creds_array);
-	
+
 fwd_exit:
 	krb5_free_data_contents(context, &outbuf);
 
@@ -542,10 +542,10 @@ int
 auks_krb5_cred_renew(char *ccachefilename)
 {
 	int fstatus = AUKS_ERROR ;
-	
+
 	int read_cred_is_tgt = 0;
 	int read_cred_is_renewable = 0;
-	
+
 	/* kerberos related variables */
 	krb5_context context;
 	krb5_error_code err_code;
@@ -554,17 +554,17 @@ auks_krb5_cred_renew(char *ccachefilename)
 	krb5_creds read_cred;
 	krb5_creds renew_cred;
 	krb5_cc_cursor cc_cursor;
-	
+
 	/* initialize kerberos context */
 	err_code = krb5_init_context(&context);
 	if (err_code) {
 		auks_error("unable to initialize kerberos context : %s",
 			   error_message(err_code));
-		fstatus = AUKS_ERROR_KRB5_CRED_INIT_CTX ; 
+		fstatus = AUKS_ERROR_KRB5_CRED_INIT_CTX ;
 		goto exit;
 	}
 	auks_log("kerberos context successfully initialized");
-		
+
 	/* initialize kerberos credential cache structure */
 	if (ccachefilename == NULL)
 		err_code = krb5_cc_default(context,&ccache);
@@ -597,7 +597,7 @@ auks_krb5_cred_renew(char *ccachefilename)
 			if ((read_cred.ticket_flags & TKT_FLG_INITIAL)
 			    || (read_cred.ticket_flags & TKT_FLG_FORWARDED)) {
 				read_cred_is_tgt = 1;
-				if (read_cred.ticket_flags 
+				if (read_cred.ticket_flags
 				    & TKT_FLG_RENEWABLE) {
 					read_cred_is_renewable = 1;
 					break;
@@ -615,7 +615,7 @@ auks_krb5_cred_renew(char *ccachefilename)
 	} else
 		auks_log("credential cache sequential read "
 			 "successfully stopped");
-	
+
 	/* try to do renewal if a TGT was found */
 	if (!read_cred_is_tgt) {
 		auks_error("no TGT found in credential cache");
@@ -639,7 +639,7 @@ auks_krb5_cred_renew(char *ccachefilename)
 		goto seq_exit;
 	}
 	auks_log("TGT is still renewable");
-		
+
 	/* renew credential cache TGT */
 	memset(&renew_cred, 0,sizeof(renew_cred));
 
@@ -665,7 +665,7 @@ auks_krb5_cred_renew(char *ccachefilename)
 		goto cred_exit;
 	}
 	auks_log("server principal successfully put into request cred");
-		
+
 	/* renew credential cache TGT */
 /* 	err_code = krb5_get_credentials_renew(context,KDC_OPT_RENEW,ccache, */
 /* 					      &renew_cred,&p_cred_out); */
@@ -731,7 +731,7 @@ auks_krb5_cred_renew_buffer(char *in_buf,size_t in_buf_len,
 	if (err_code) {
 		auks_error("unable to initialize kerberos context : %s",
 			   error_message(err_code));
-		fstatus = AUKS_ERROR_KRB5_CRED_INIT_CTX ; 
+		fstatus = AUKS_ERROR_KRB5_CRED_INIT_CTX ;
 		goto exit;
 	}
 	auks_log("kerberos context successfully initialized");
@@ -746,14 +746,14 @@ auks_krb5_cred_renew_buffer(char *in_buf,size_t in_buf_len,
 		goto ctx_exit;
 	}
 	auks_log("kerberos authentication context successfully initialized");
-	
+
 	/* clear kerberos authentication context flags */
 	krb5_auth_con_setflags(context, auth_context, 0);
-	
+
 	/* build a kerberos data structure with input buffer */
 	data.data = in_buf;
 	data.length = in_buf_len;
-	
+
 	/* build kerberos credential structure using this data structure */
 	err_code = krb5_rd_cred(context, auth_context, &data,&creds,&krdata);
 	if (err_code) {
@@ -761,7 +761,6 @@ auks_krb5_cred_renew_buffer(char *in_buf,size_t in_buf_len,
 			   error_message(err_code));
 		fstatus = AUKS_ERROR_KRB5_CRED_RD_CRED ;
 		goto auth_ctx_exit;
-		
 	}
 	auks_log("credential data successfully deserialized");
 
@@ -799,7 +798,7 @@ auks_krb5_cred_renew_buffer(char *in_buf,size_t in_buf_len,
 		addresses = NULL ;
 
 	/* renew credential */
-	err_code = krb5_get_cred_via_tkt(context,(*creds),					 
+	err_code = krb5_get_cred_via_tkt(context,(*creds),
 					 ( KDC_OPT_CANONICALIZE |
 					   KDC_OPT_RENEW |
 					   ( (*creds)->ticket_flags &
@@ -861,7 +860,7 @@ auth_ctx_exit:
 
 ctx_exit:
 	krb5_free_context(context);
-	
+
 exit:
 	return fstatus;
 }
@@ -913,14 +912,14 @@ auks_krb5_cred_deladdr_buffer(char *in_buf,size_t in_buf_len,
 		goto ctx_exit;
 	}
 	auks_log("kerberos authentication context successfully initialized");
-	
+
 	/* clear kerberos authentication context flags */
 	krb5_auth_con_setflags(context, auth_context, 0);
-	
+
 	/* build a kerberos data structure with input buffer */
 	data.data = in_buf;
 	data.length = in_buf_len;
-	
+
 	/* build kerberos credential structure using this data structure */
 	err_code = krb5_rd_cred(context, auth_context, &data,&creds,&krdata);
 	if (err_code) {
@@ -928,7 +927,6 @@ auks_krb5_cred_deladdr_buffer(char *in_buf,size_t in_buf_len,
 			   error_message(err_code));
 		fstatus = AUKS_ERROR_KRB5_CRED_RD_CRED ;
 		goto auth_ctx_exit;
-		
 	}
 	auks_log("credential data successfully deserialized");
 
@@ -958,7 +956,7 @@ auks_krb5_cred_deladdr_buffer(char *in_buf,size_t in_buf_len,
 	auks_log("server principal successfully put into request cred");
 
 	/* get addressless forwarded ticket */
-	err_code = krb5_get_cred_via_tkt(context,(*creds),					 
+	err_code = krb5_get_cred_via_tkt(context,(*creds),
 					 ( KDC_OPT_CANONICALIZE |
 					   KDC_OPT_FORWARDED |
 					   ( (*creds)->ticket_flags &
@@ -971,7 +969,8 @@ auks_krb5_cred_deladdr_buffer(char *in_buf,size_t in_buf_len,
 		fstatus = AUKS_ERROR_KRB5_CRED_GET_FWD_CRED ;
 		goto cred_exit;
 	}
-	auks_log("addressless forwarded cred successfully got using auks cred buffer");
+	auks_log("addressless forwarded cred successfully"
+		 " got using auks cred buffer");
 
 	/* extract credential data */
 	err_code = krb5_mk_1cred(context,auth_context,p_cred_out,
@@ -1000,7 +999,7 @@ auks_krb5_cred_deladdr_buffer(char *in_buf,size_t in_buf_len,
 	*pout_buf_len = length;
 	auks_log("credential successfully stored in output buffer");
 	fstatus = AUKS_SUCCESS ;
-	
+
 	auks_log("in length : %u | out length : %u",
 		 in_buf_len,
 		 p_outbuf->length);
@@ -1020,10 +1019,7 @@ auth_ctx_exit:
 
 ctx_exit:
 	krb5_free_context(context);
-	
+
 exit:
 	return fstatus;
 }
-
-
-
