@@ -1,5 +1,5 @@
 dnl Package initialisation
-AC_INIT([auks],[0.3.6],[matthieu.hautreux@cea.fr])
+AC_INIT([auks],[0.4.2],[matthieu.hautreux@cea.fr])
 
 dnl Auxiliary scripts directory
 AC_CONFIG_AUX_DIR([build-aux])

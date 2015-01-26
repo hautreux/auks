@@ -1,4 +1,13 @@
-auks-0.4.1 (ongoing)
+01/26/2015 Matthieu Hautreux <matthieu.hautreux@cea.fr>
+
+	* auks-0.4.2
+	* init scripts : change order to be launched after NTP on RHEL-6.x
+	* slurm/spank: ensure that the renewer launched using spank is working
+	  in / and waited for at the end of the step.
+	* cleaner: correct a bug resulting in non renewable tickets removal
+	  at each cleaning stage in auksd.
+
+	* auks-0.4.1(-x)
 	* aukspriv: add kinit timeout logic
 	* auks: automatically inhibate auks support when no ccache available
 	* auks SLURM Spank plugin: add hostcredcache= conf pragma to specify
@@ -7,11 +16,6 @@ auks-0.4.1 (ongoing)
 	* code cleaning for cppcheck usage
 	* auks SLURM Spank plugin: add sync=mode conf pragma (cf man auks.so)
 	* libauksapi: correct a bug in uid management greater than 999999999
-	* init scripts : change order to be launched after NTP on RHEL-6.x
-	* slurm/spank: ensure that the renewer launched using spank is working
-	  in / and waited for at the end of the step.
-	* cleaner: correct a bug resulting in non renewable tickets removal
-	  at each cleaning stage in auksd.
 
 10/07/2010 Matthieu Hautreux <matthieu.hautreux@cea.fr>
 
