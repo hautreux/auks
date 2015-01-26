@@ -10,7 +10,9 @@ auks-0.4.1 (ongoing)
 	* init scripts : change order to be launched after NTP on RHEL-6.x
 	* slurm/spank: ensure that the renewer launched using spank is working
 	  in / and waited for at the end of the step.
-	
+	* cleaner: correct a bug resulting in non renewable tickets removal
+	  at each cleaning stage in auksd.
+
 10/07/2010 Matthieu Hautreux <matthieu.hautreux@cea.fr>
 
 	* auks-0.4.0-1

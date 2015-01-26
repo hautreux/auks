@@ -756,8 +756,10 @@ auks_cred_repo_clean_nolock(auks_cred_repo_t * cr,int* pnb)
 		
 		/* check cred times */
 		if ( cred.info.endtime + delay < ctime || 
-		     cred.info.renew_till + delay < ctime ) {
-
+		     (cred.info.renew_till > 0 && 
+		      (cred.info.renew_till + delay < ctime)) ) {
+			auks_log("cred_repo[%d] content is :",i);
+			auks_cred_log(&cred);
 			fstatus = auks_cred_repo_remove_nolock(cr,
 							       cred.info.uid);
 			if ( fstatus != AUKS_SUCCESS ) {
