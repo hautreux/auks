@@ -83,6 +83,7 @@
 #include <string.h>
 
 #include <sys/types.h>
+#include <sys/wait.h>
 #include <sys/stat.h>
 
 #include <signal.h>
@@ -243,8 +244,9 @@ slurm_spank_task_exit (spank_t sp, int ac, char **av)
 			   (see _sync_fs method for more details) */
 			_sync_fs();
 
-			/* kill the renewer process */
-			kill(renewer_pid,SIGTERM);
+			/* kill the renewer process and wait for it */
+			kill(renewer_pid, SIGTERM);
+			waitpid(renewer_pid, NULL, 0);
 			
 			/* replace privileged uid/gid */
 			seteuid(getuid());
@@ -289,6 +291,7 @@ slurm_spank_user_init (spank_t sp, int ac, char **av)
 		argv[1]="-R";argv[2]="loop";
 		argv[3]=NULL;
 		setenv("KRB5CCNAME",auks_credcache,1);
+		chdir("/");
 		execv(argv[0],argv);
 		xerror("unable to exec credential renewer (%s)",argv[0]);
 		exit(0);

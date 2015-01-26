@@ -8,6 +8,8 @@ auks-0.4.1 (ongoing)
 	* auks SLURM Spank plugin: add sync=mode conf pragma (cf man auks.so)
 	* libauksapi: correct a bug in uid management greater than 999999999
 	* init scripts : change order to be launched after NTP on RHEL-6.x
+	* slurm/spank: ensure that the renewer launched using spank is working
+	  in / and waited for at the end of the step.
 	
 10/07/2010 Matthieu Hautreux <matthieu.hautreux@cea.fr>
 
