@@ -2,7 +2,7 @@
 #
 # Init file for Auks Crendetial renewer daemon
 #
-# chkconfig: 2345 56 24
+# chkconfig: 2345 61 60
 # description: Auks Credentials Renewer Daemon
 #
 # processname: auksdrenewer

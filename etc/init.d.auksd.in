@@ -2,7 +2,7 @@
 #
 # Init file for Auks daemon
 #
-# chkconfig: 2345 55 25
+# chkconfig: 2345 61 60
 # description: Auks External Kerberos Credential Support Daemon
 #
 # processname: auksd

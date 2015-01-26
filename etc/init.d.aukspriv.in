@@ -2,7 +2,7 @@
 #
 # Init file for aukspriv ccache from keytab scripted daemon
 #
-# chkconfig: 2345 55 25
+# chkconfig: 2345 60 61
 # description: Auks aukspriv ccache from keytab scripted daemon
 #
 # processname: aukspriv

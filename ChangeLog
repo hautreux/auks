@@ -2,14 +2,15 @@ auks-0.4.1 (ongoing)
 	* aukspriv: add kinit timeout logic
 	* auks: automatically inhibate auks support when no ccache available
 	* auks SLURM Spank plugin: add hostcredcache= conf pragma to specify
-	  a particular credential cache for the slurmd actions (based on a 
+	  a particular credential cache for the slurmd actions (based on a
 	  patch from Nacho Barrientos, CERN)
 	* code cleaning for cppcheck usage
 	* auks SLURM Spank plugin: add sync=mode conf pragma (cf man auks.so)
 	* libauksapi: correct a bug in uid management greater than 999999999
+	* init scripts : change order to be launched after NTP on RHEL-6.x
 	
 10/07/2010 Matthieu Hautreux <matthieu.hautreux@cea.fr>
-	
+
 	* auks-0.4.0-1
 	* correct client/server connection timeout
 	* improve init service internals to prevent possible daemon hangup
