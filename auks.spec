@@ -7,6 +7,7 @@ Group: System Environment/Base
 URL: http://
 Source0: %{name}-%{version}.tar.gz
 BuildRoot: %{_tmppath}/%{name}-%{version}-%{release}-root
+BuildRequires: autoconf automake libtool
 
 ### Thanks to slurm packagers
 #
