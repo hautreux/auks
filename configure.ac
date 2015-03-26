@@ -18,6 +18,8 @@ AC_CONFIG_HEADERS([config.h])
 
 dnl In order to build lib using Autotools .la format
 AC_PROG_LIBTOOL
+m4_pattern_allow([AM_PROG_AR])
+AM_PROG_AR
 
 dnl This is a C project
 AC_PROG_CC
