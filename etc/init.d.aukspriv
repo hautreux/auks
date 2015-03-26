@@ -6,7 +6,6 @@
 # description: Auks aukspriv ccache from keytab scripted daemon
 #
 # processname: aukspriv
-# pidfile: /var/run/aukspriv.pid
 
 # source function library
 . /etc/rc.d/init.d/functions

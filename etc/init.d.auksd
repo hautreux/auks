@@ -6,7 +6,6 @@
 # description: Auks External Kerberos Credential Support Daemon
 #
 # processname: auksd
-# pidfile: /var/run/auksd.pid
 
 # source function library
 . /etc/rc.d/init.d/functions

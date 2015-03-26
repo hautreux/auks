@@ -6,7 +6,6 @@
 # description: Auks Credentials Renewer Daemon
 #
 # processname: auksdrenewer
-# pidfile: /var/run/auksdrenewer.pid
 
 # source function library
 . /etc/rc.d/init.d/functions
