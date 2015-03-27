@@ -1,7 +1,7 @@
 Summary: Aside Utility for Kerberos Support
 Name: auks
-Version: 0.4.2
-Release: 4%{?dist}
+Version: 0.4.3
+Release: 1%{?dist}
 License: CeCILL-C License
 Group: System Environment/Base
 URL: http://sourceforge.net/projects/auks/
@@ -112,6 +112,8 @@ install -D -m644 src/plugins/slurm/slurm-spank-auks.conf ${RPM_BUILD_ROOT}/etc/s
 %endif
 
 %changelog
+* Fri Mar 27 2015 Matthieu Hautreux <matthieu.hautreux@cea.fr> - 0.4.3-1
+- CentOS-7.x compatible version
 * Thu Jan 29 2015 Matthieu Hautreux <matthieu.hautreux@cea.fr> - 0.4.2-4
 - no longer explicitely remove -fstack-protector (it was required to
   cope with a strange behavior when linking against the kerberos lib

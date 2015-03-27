@@ -1,3 +1,9 @@
+03/27/2015  Matthieu Hautreux <matthieu.hautreux@cea.fr>
+
+	* auks-0.4.3
+	* configure: fix for automake 1.12 (CentOS-7.x)
+	* initscripts: remove unused pidfiles in headers (CentOS-7.x)
+
 01/26/2015 Matthieu Hautreux <matthieu.hautreux@cea.fr>
 
 	* auks-0.4.2
