@@ -7,7 +7,7 @@ Group: System Environment/Base
 URL: http://sourceforge.net/projects/auks/
 Source0: %{name}-%{version}.tar.gz
 
-# For kerberos prior to 1.8, you should define 
+# For kerberos prior to 1.8, you should define
 # -DLIBKRB5_MEMORY_LEAK_WORKAROUND in the configure
 # to activate a workaround in auks that corrects a memory
 # leak in replay cache management
@@ -25,7 +25,7 @@ BuildRequires: libtool
 %bcond_without slurm
 
 %description
-Auks is an open source project that helps Batch Systems to provide 
+Auks is an open source project that helps Batch Systems to provide
 Kerberos Credential Support.
 Auks is not an authentication system. It only enables to set up
 a trusted remote cache system for storage and retrieval of kerberos
@@ -44,7 +44,7 @@ for the AUKS API.
 Summary: Slurm plugins for Auks
 Group: System Environment/Base
 Requires: slurm >= 1.3.0
-Requires: auks >= 0.3.1
+Requires: auks >= %{version}
 BuildRequires: slurm-devel >= 1.3.0
 %description slurm
 Plugins that provides Kerberos Credential Support to Slurm
@@ -55,11 +55,11 @@ Plugins that provides Kerberos Credential Support to Slurm
 
 %build
 autoreconf -fvi
-%configure --program-prefix=%{?_program_prefix:%{_program_prefix}} %{?with_slurm:--with-slurm}
+%configure %{?with_slurm:--with-slurm}
 make %{?_smp_mflags}
 
 %install
-DESTDIR="$RPM_BUILD_ROOT" make install
+make install DESTDIR="$RPM_BUILD_ROOT"
 
 # Delete unpackaged files:
 rm -f $RPM_BUILD_ROOT/%{_libdir}/*.{a,la}
@@ -70,7 +70,7 @@ rm -f $RPM_BUILD_ROOT/%{_libdir}/slurm/*.{a,la}
 install -D -m755 etc/init.d.auksd $RPM_BUILD_ROOT/etc/init.d/auksd
 install -D -m755 etc/init.d.auksdrenewer $RPM_BUILD_ROOT/etc/init.d/auksdrenewer
 install -D -m755 etc/init.d.aukspriv $RPM_BUILD_ROOT/etc/init.d/aukspriv
-install -D -m755 etc/logrotate.d.auks $RPM_BUILD_ROOT/etc/logrotate.d/auks
+install -D -m644 etc/logrotate.d.auks $RPM_BUILD_ROOT/etc/logrotate.d/auks
 
 install -D -m644 etc/auks.conf.example ${RPM_BUILD_ROOT}%{_sysconfdir}/auks.conf.example
 install -D -m644 etc/auks.acl.example ${RPM_BUILD_ROOT}%{_sysconfdir}/auks.acl.example
@@ -91,7 +91,7 @@ install -D -m644 src/plugins/slurm/slurm-spank-auks.conf ${RPM_BUILD_ROOT}/etc/s
 /etc/init.d/auksd
 /etc/init.d/auksdrenewer
 /etc/init.d/aukspriv
-/etc/logrotate.d/auks
+%config(noreplace) /etc/logrotate.d/auks
 %{_mandir}/man1/auks.1.gz
 %{_mandir}/man5/auks.acl.5.gz
 %{_mandir}/man5/auks.conf.5.gz
@@ -119,7 +119,7 @@ install -D -m644 src/plugins/slurm/slurm-spank-auks.conf ${RPM_BUILD_ROOT}/etc/s
   cope with a strange behavior when linking against the kerberos lib
   (krb5-libs-1.6.1-25.el5)
 * Wed Jan 28 2015 Matthieu Hautreux <matthieu.hautreux@cea.fr> - 0.4.2-3
-- spec file cleaning & refactoring 
+- spec file cleaning & refactoring
 * Tue Jan 27 2015 Matthieu Hautreux <matthieu.hautreux@cea.fr> - 0.4.2-2
 - spec file cleaning
 * Tue Mar 10 2009 Matthieu Hautreux <matthieu.hautreux@cea.fr> - 0.3.1-2
