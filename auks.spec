@@ -1,7 +1,7 @@
 Summary: Aside Utility for Kerberos Support
 Name: auks
 Version: 0.4.3
-Release: 1%{?dist}
+Release: 2%{?dist}
 License: CeCILL-C License
 Group: System Environment/Base
 URL: http://sourceforge.net/projects/auks/
@@ -18,8 +18,7 @@ BuildRequires: automake
 BuildRequires: libtool
 
 #  Allow override of sysconfdir via _auks_sysconfdir.
-%{!?_auks_sysconfdir: %global _auks_sysconfdir /etc/auks}
-%define _sysconfdir %_auks_sysconfdir
+%{!?_auks_confdir: %global _auks_confdir /etc/auks}
 
 # Compiled with slurm plugin as default (disable using --without slurm)
 %bcond_without slurm
@@ -67,13 +66,13 @@ rm -f $RPM_BUILD_ROOT/%{_libdir}/*.{a,la}
 rm -f $RPM_BUILD_ROOT/%{_libdir}/slurm/*.{a,la}
 %endif
 
-install -D -m755 etc/init.d.auksd $RPM_BUILD_ROOT/etc/init.d/auksd
-install -D -m755 etc/init.d.auksdrenewer $RPM_BUILD_ROOT/etc/init.d/auksdrenewer
-install -D -m755 etc/init.d.aukspriv $RPM_BUILD_ROOT/etc/init.d/aukspriv
+install -D -m755 etc/init.d.auksd $RPM_BUILD_ROOT%{_initddir}/auksd
+install -D -m755 etc/init.d.auksdrenewer $RPM_BUILD_ROOT%{_initddir}/auksdrenewer
+install -D -m755 etc/init.d.aukspriv $RPM_BUILD_ROOT%{_initddir}/aukspriv
 install -D -m644 etc/logrotate.d.auks $RPM_BUILD_ROOT/etc/logrotate.d/auks
 
-install -D -m644 etc/auks.conf.example ${RPM_BUILD_ROOT}%{_sysconfdir}/auks.conf.example
-install -D -m644 etc/auks.acl.example ${RPM_BUILD_ROOT}%{_sysconfdir}/auks.acl.example
+install -D -m644 etc/auks.conf.example ${RPM_BUILD_ROOT}%{_auks_confdir}/auks.conf.example
+install -D -m644 etc/auks.acl.example ${RPM_BUILD_ROOT}%{_auks_confdir}/auks.acl.example
 
 mkdir -pm 0700 ${RPM_BUILD_ROOT}%{_localstatedir}/cache/auks
 
@@ -86,11 +85,11 @@ install -D -m644 src/plugins/slurm/slurm-spank-auks.conf ${RPM_BUILD_ROOT}/etc/s
 %{_libdir}/libauksapi.so.*
 %{_bindir}/*
 %{_sbindir}/*
-%{_sysconfdir}/auks.conf.example
-%{_sysconfdir}/auks.acl.example
-/etc/init.d/auksd
-/etc/init.d/auksdrenewer
-/etc/init.d/aukspriv
+%{_auks_confdir}/auks.conf.example
+%{_auks_confdir}/auks.acl.example
+%{_initddir}/auksd
+%{_initddir}/auksdrenewer
+%{_initddir}/aukspriv
 %config(noreplace) /etc/logrotate.d/auks
 %{_mandir}/man1/auks.1.gz
 %{_mandir}/man5/auks.acl.5.gz
@@ -112,6 +111,8 @@ install -D -m644 src/plugins/slurm/slurm-spank-auks.conf ${RPM_BUILD_ROOT}/etc/s
 %endif
 
 %changelog
+* Fri Mar 27 2015 Matthieu Hautreux <matthieu.hautreux@cea.fr> - 0.4.3-2
+- spec file cleanup
 * Fri Mar 27 2015 Matthieu Hautreux <matthieu.hautreux@cea.fr> - 0.4.3-1
 - CentOS-7.x compatible version
 * Thu Jan 29 2015 Matthieu Hautreux <matthieu.hautreux@cea.fr> - 0.4.2-4
