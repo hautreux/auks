@@ -704,7 +704,7 @@ auks_cred_repo_load_cache(auks_cred_repo_t * cr)
 		continue;
 	}
 
-	auks_log("%u cred(s) loaded from cachedir %s",loaded_ccache,filename);
+	auks_log("%u cred(s) loaded from cachedir %s",loaded_ccache,cachedir);
 	fstatus = AUKS_SUCCESS;
 
 	closedir(dir);
