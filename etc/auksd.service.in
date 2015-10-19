@@ -1,0 +1,13 @@
+[Unit]
+Description=Auks External Kerberos Credential Support Daemon
+After=network.target
+
+[Service]
+Type=forking
+EnvironmentFile=-/etc/sysconfig/auksd
+ExecStart=@sbindir@/auksd $AUKSPRIV_OPTIONS
+GuessMainPID=true
+ExecReload=/bin/kill -HUP $MAINPID
+
+[Install]
+WantedBy=auksdrenewer.service

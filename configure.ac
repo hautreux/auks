@@ -46,6 +46,9 @@ AC_CONFIG_FILES([Makefile
 		etc/init.d.auksd
 		etc/init.d.auksdrenewer
 		etc/init.d.aukspriv
+		etc/auksd.service
+		etc/auksdrenewer.service
+		etc/aukspriv.service
 		etc/Makefile
 		doc/Makefile
 		doc/man/Makefile])

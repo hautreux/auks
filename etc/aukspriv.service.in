@@ -1,0 +1,12 @@
+[Unit]
+Description=Auks ccache from keytab scripted daemon
+After=network.target
+
+[Service]
+Type=forking
+EnvironmentFile=-/etc/sysconfig/aukspriv
+ExecStart=@sbindir@/aukspriv $AUKSPRIV_OPTIONS
+GuessMainPID=true
+
+[Install]
+WantedBy=auksdrenewer.service

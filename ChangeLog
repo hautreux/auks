@@ -1,3 +1,8 @@
+10/19/2015  Matthieu Hautreux <matthieu.hautreux@cea.fr>
+
+	* auks-0.4.3-3
+	* integrate Systemd init scripts for auks components
+
 03/27/2015  Matthieu Hautreux <matthieu.hautreux@cea.fr>
 
 	* auks-0.4.3

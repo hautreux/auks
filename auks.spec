@@ -1,11 +1,20 @@
+# evaluate systemd availability
+%if 0%{?fedora} >= 17 || 0%{?rhel} >= 7
+%global _with_systemd 1
+%else
+%global _with_systemd 0
+%endif
+
+
 Summary: Aside Utility for Kerberos Support
 Name: auks
 Version: 0.4.3
-Release: 2%{?dist}
+Release: 3%{?dist}
 License: CeCILL-C License
 Group: System Environment/Base
 URL: http://sourceforge.net/projects/auks/
 Source0: %{name}-%{version}.tar.gz
+
 
 # For kerberos prior to 1.8, you should define
 # -DLIBKRB5_MEMORY_LEAK_WORKAROUND in the configure
@@ -17,8 +26,24 @@ BuildRequires: autoconf
 BuildRequires: automake
 BuildRequires: libtool
 
+%if 0%{?_with_systemd}
+# Required for %%post, %%preun, %%postun
+Requires:       systemd
+%if 0%{?fedora} >= 18 || 0%{?rhel} >= 7
+BuildRequires:  systemd
+%else
+BuildRequires:  systemd-units
+%endif
+%else
+# Required for %%post and %%preun
+Requires:       chkconfig
+# Required for %%preun and %%postun
+Requires:       initscripts
+%endif
+
 #  Allow override of sysconfdir via _auks_sysconfdir.
-%{!?_auks_confdir: %global _auks_confdir /etc/auks}
+%{!?_auks_sysconfdir: %global _auks_sysconfdir /etc/auks}
+%define _sysconfdir %_auks_sysconfdir
 
 # Compiled with slurm plugin as default (disable using --without slurm)
 %bcond_without slurm
@@ -52,6 +77,7 @@ Plugins that provides Kerberos Credential Support to Slurm
 %prep
 %setup -q
 
+
 %build
 autoreconf -fvi
 %configure %{?with_slurm:--with-slurm}
@@ -61,18 +87,26 @@ make %{?_smp_mflags}
 make install DESTDIR="$RPM_BUILD_ROOT"
 
 # Delete unpackaged files:
-rm -f $RPM_BUILD_ROOT/%{_libdir}/*.{a,la}
+rm -f %{buildroot}%{_libdir}/*.{a,la}
 %if %{with slurm}
-rm -f $RPM_BUILD_ROOT/%{_libdir}/slurm/*.{a,la}
+rm -f %{buildroot}%{_libdir}/slurm/*.{a,la}
 %endif
 
-install -D -m755 etc/init.d.auksd $RPM_BUILD_ROOT%{_initddir}/auksd
-install -D -m755 etc/init.d.auksdrenewer $RPM_BUILD_ROOT%{_initddir}/auksdrenewer
-install -D -m755 etc/init.d.aukspriv $RPM_BUILD_ROOT%{_initddir}/aukspriv
-install -D -m644 etc/logrotate.d.auks $RPM_BUILD_ROOT/etc/logrotate.d/auks
-
-install -D -m644 etc/auks.conf.example ${RPM_BUILD_ROOT}%{_auks_confdir}/auks.conf.example
-install -D -m644 etc/auks.acl.example ${RPM_BUILD_ROOT}%{_auks_confdir}/auks.acl.example
+%if 0%{?_with_systemd}
+# Systemd for fedora >= 17 or el 7
+%{__install} -d -m0755  %{buildroot}%{_unitdir}
+install -Dp -m0644 etc/auksd.service %{buildroot}%{_unitdir}/auksd.service
+install -Dp -m0644 etc/auksdrenewer.service %{buildroot}%{_unitdir}/auksdrenewer.service
+install -Dp -m0644 etc/aukspriv.service %{buildroot}%{_unitdir}/aukspriv.service
+%else
+# Otherwise init.d for fedora < 17 or el 5, 6
+install -Dp -m0755 etc/init.d.auksd %{buildroot}%{_initrddir}/auksd
+install -Dp -m0755 etc/init.d.auksdrenewer %{buildroot}%{_initrddir}/auksdrenewer
+install -Dp -m0755 etc/init.d.aukspriv %{buildroot}%{_initrddir}/aukspriv
+%endif
+install -D -m0644 etc/logrotate.d.auks $RPM_BUILD_ROOT/etc/logrotate.d/auks
+install -D -m0644 etc/auks.conf.example ${RPM_BUILD_ROOT}%{_sysconfdir}/auks.conf.example
+install -D -m0644 etc/auks.acl.example ${RPM_BUILD_ROOT}%{_sysconfdir}/auks.acl.example
 
 mkdir -pm 0700 ${RPM_BUILD_ROOT}%{_localstatedir}/cache/auks
 
@@ -85,11 +119,17 @@ install -D -m644 src/plugins/slurm/slurm-spank-auks.conf ${RPM_BUILD_ROOT}/etc/s
 %{_libdir}/libauksapi.so.*
 %{_bindir}/*
 %{_sbindir}/*
-%{_auks_confdir}/auks.conf.example
-%{_auks_confdir}/auks.acl.example
-%{_initddir}/auksd
-%{_initddir}/auksdrenewer
-%{_initddir}/aukspriv
+%{_sysconfdir}/auks.conf.example
+%{_sysconfdir}/auks.acl.example
+%if 0%{?_with_systemd}
+%{_unitdir}/auksd.service
+%{_unitdir}/auksdrenewer.service
+%{_unitdir}/aukspriv.service
+%else
+%{_initrddir}/auksd
+%{_initrddir}/auksdrenewer
+%{_initrddir}/aukspriv
+%endif
 %config(noreplace) /etc/logrotate.d/auks
 %{_mandir}/man1/auks.1.gz
 %{_mandir}/man5/auks.acl.5.gz
@@ -111,6 +151,8 @@ install -D -m644 src/plugins/slurm/slurm-spank-auks.conf ${RPM_BUILD_ROOT}/etc/s
 %endif
 
 %changelog
+* Mon Oct 19 2015 Matthieu Hautreux <matthieu.hautreux@cea.fr> - 0.4.3-3
+- Integrate Systemd init scripts for auks components
 * Fri Mar 27 2015 Matthieu Hautreux <matthieu.hautreux@cea.fr> - 0.4.3-2
 - spec file cleanup
 * Fri Mar 27 2015 Matthieu Hautreux <matthieu.hautreux@cea.fr> - 0.4.3-1

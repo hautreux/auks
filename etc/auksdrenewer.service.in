@@ -1,0 +1,13 @@
+[Unit]
+Description=Auks Credentials Renewer Daemon
+After=network.target
+
+[Service]
+Type=forking
+EnvironmentFile=-/etc/sysconfig/auksdrenewer
+ExecStart=@sbindir@/auksdrenewer $AUKSDRENEWER_OPTIONS
+ExecReload=/bin/kill -HUP $MAINPID
+GuessMainPID=true
+
+[Install]
+WantedBy=multi-user.target
