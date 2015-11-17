@@ -174,7 +174,7 @@ renewer_main_function(auks_engine_t* engine,int* pr)
 	auks_cred_t* creds;
 	auks_cred_t* acred;
 	int creds_nb;
-	
+
 	renewed=0;
 
 	/* dump auks creds table */
@@ -189,13 +189,13 @@ renewer_main_function(auks_engine_t* engine,int* pr)
 
 	/* look at each cred and try to renew it if required */
 	for ( i = 0 ; i < creds_nb ; i++ ) {
-		
+
 		if ( eof_main_loop_flag )
 			break;
 
 		acred = creds+i;
 
-		life = (int) acred->info.endtime - 
+		life = (int) acred->info.endtime -
 			(int) acred->info.starttime ;
 
 		/* check for renewability */
@@ -212,10 +212,10 @@ renewer_main_function(auks_engine_t* engine,int* pr)
 				  life,engine->renewer_minlifetime);
 			continue;
 		}
-		
+
 		/* get current time */
 		time(&ctime);
-		
+
 		/* get delay in seconds before expiration */
 		delay = (int) (acred->info.endtime - ctime) ;
 
@@ -250,7 +250,7 @@ renewer_main_function(auks_engine_t* engine,int* pr)
 		}
 		auks_log3("%s's cred renewed in an addressless one",
 			  acred->info.principal);
-			
+
 		/* add it to the auksd repo */
 		fstatus = auks_api_add_auks_cred(engine,acred);
 		if ( fstatus != AUKS_SUCCESS ) {
@@ -261,17 +261,17 @@ renewer_main_function(auks_engine_t* engine,int* pr)
 		}
 		auks_log2("%s's renewed cred successfully added to auksd",
 			  acred->info.principal,auks_strerror(fstatus));
-		
-		
-		
+
+
+
 		/* increment renewed creds counter */
 		renewed++;
 	}
-		
+
 	free(creds);
 
 	*pr=renewed;
-end:	
+end:
 	return fstatus;
 }
 
@@ -300,7 +300,7 @@ auksd_renewer_loop(auks_engine_t* engine)
 		if ( renewed > 0 )
 			auks_log("%d creds renewed in ~%us",
 				 renewed,btime-atime);
-		
+
 		if ( ! eof_main_loop_flag ) {
 
 			/* just sleep enough time to ensure */
@@ -317,12 +317,12 @@ auksd_renewer_loop(auks_engine_t* engine)
 					 "starting next renew");
 
 		}
-		
+
 	}
 	while ( eof_main_loop_flag == 0 ) ;
-	
+
 	auks_log("ending main loop");
-	
+
 exit:
 	return fstatus ;
 }
@@ -334,7 +334,7 @@ main(int argc,char** argv)
 
 	int i;
 	int background_flag=0;
-	
+
 	int debug_level=0;
 	int verbose_level=0;
 
@@ -343,7 +343,7 @@ main(int argc,char** argv)
 
 	char* conf_file_string;
 	char* working_directory;
-	
+
 	/* options processing variables */
 	char* progname;
 	char* optstring="dvhf:l:";
@@ -355,26 +355,26 @@ main(int argc,char** argv)
 \t-f conffile\tConfiguration file\n\
 \t-l logfile\tlog file\n\n";
 	char  option;
-	
+
 	/* signal handling variables */
 	struct sigaction saction;
-	
+
 	/* auksd engine */
 	auks_engine_t engine;
-	
+
 	/* logging */
 	char* logfile_str=NULL;
 	char* default_logfile_str=NULL;
 	FILE* logfile=NULL;
 	FILE* debugfile=NULL;
-	
+
 	/* get current program name */
 	progname=rindex(argv[0],'/');
 	if(progname==NULL)
 		progname=argv[0];
 	else
 		progname++;
-	
+
 	conf_file_string = NULL;
 
 	/* process options */
@@ -462,7 +462,7 @@ main(int argc,char** argv)
 		}
 
 		/* no display required, jump into background */
-		if( (!default_verbose_level && !default_debug_level) || 
+		if( (!default_verbose_level && !default_debug_level) ||
 		   default_logfile_str != NULL )
 		{
 			/* go to background mode if not already done */
@@ -471,16 +471,16 @@ main(int argc,char** argv)
 				/* fork, father goes away */
 				if(fork() != 0)
 					exit(EXIT_SUCCESS);
-		  
+
 				/* go into working directory */
 				working_directory="/";
 				chdir(working_directory);
-		  
+
 				/* change session ID, fork and keep only son */
 				setsid();
 				if(fork() != 0)
 					exit(EXIT_SUCCESS);
-		  
+
 				/* close all open file descriptor */
 				for(i=0;i<FOPEN_MAX;i++)
 					close(i);
@@ -505,7 +505,7 @@ main(int argc,char** argv)
 				logfile_str = default_logfile_str ;
 			else
 				logfile_str = engine.renewer_logfile ;
-			
+
 			if ( default_verbose_level )
 				verbose_level = default_verbose_level ;
 			else
@@ -517,7 +517,7 @@ main(int argc,char** argv)
 				debug_level = engine.renewer_loglevel ;
 
 
-			if((strlen(logfile_str)>0) && verbose_level 
+			if((strlen(logfile_str)>0) && verbose_level
 			   && (logfile=fopen(logfile_str,"a+"))){
 				xverbose_setstream(logfile);
 				xerror_setstream(logfile);
