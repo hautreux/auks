@@ -627,6 +627,7 @@ main(int argc,char** argv)
 
 	int i;
 	int background_flag=0;
+	int foreground_flag=0;
 
 	int debug_level=0;
 	int verbose_level=0;
@@ -635,12 +636,13 @@ main(int argc,char** argv)
 
 	/* options processing variables */
 	char* progname;
-	char* optstring="dvhf:";
-	char* short_options_desc="\nUsage : %s [-h] [-dv] [-f conffile]\n\n";
+	char* optstring="dvhf:F";
+	char* short_options_desc="\nUsage : %s [-h] [-dv] [-F] [-f conffile]\n\n";
 	char* addon_options_desc="\
-\t-h\t\tshow this message\n			\
-\t-d\t\tincrease debug level\n			\
-\t-v\t\tincrease verbose level\n		\
+\t-h\t\tshow this message\n \
+\t-d\t\tincrease debug level (force foreground mode)\n \
+\t-v\t\tincrease verbose level (force forground mode)\n \
+\t-F\t\trun in foreground\n \
 \t-f conffile\tConfiguration file\n\n";
 	char  option;
 
@@ -676,6 +678,9 @@ main(int argc,char** argv)
 			break;
 		case 'f' :
 			conf_file_string=strdup(optarg);
+			break;
+		case 'F' :
+			foreground_flag = 1;
 			break;
 		case 'h' :
 		default :
@@ -743,7 +748,7 @@ main(int argc,char** argv)
 		if(!verbose_level && !debug_level)
 		{
 			/* go to background mode if not already done */
-			if(!background_flag)
+			if(!background_flag && !foreground_flag)
 			{
 				/* fork, father goes away */
 				if(fork() != 0)
@@ -775,34 +780,45 @@ main(int argc,char** argv)
 			}
 
 
-			/* (re)open logfile and debug file */
-			if(logfile!=NULL){
-				fclose(logfile);
-				logfile=NULL;
+			/* in bg mode : (re)open logfile and debug file
+			 * in fg mode : set log level according to conf file */
+			if (!foreground_flag) {
+				if (logfile != NULL){
+					fclose(logfile);
+					logfile = NULL;
+				}
+				if (debugfile != NULL){
+					fclose(debugfile);
+					debugfile = NULL;
+				}
+				if((strlen(engine.logfile) > 0) &&
+				   engine.loglevel &&
+				   (logfile = fopen(engine.logfile,"a+"))) {
+					xverbose_setstream(logfile);
+					xerror_setstream(logfile);
+					xverbose_setmaxlevel(engine.loglevel);
+					xerror_setmaxlevel(engine.loglevel);
+				}
+				else {
+					xverbose_setmaxlevel(0);
+					xerror_setmaxlevel(0);
+				}
+				if((strlen(engine.debugfile) > 0) &&
+				   engine.debuglevel &&
+				   (debugfile = fopen(engine.debugfile,"a+"))) {
+					xdebug_setstream(debugfile);
+					xdebug_setmaxlevel(engine.debuglevel);
+				}
+				else {
+					xdebug_setmaxlevel(0);
+				}
 			}
-			if(debugfile!=NULL){
-				fclose(debugfile);
-				debugfile=NULL;
-			}
-			if((strlen(engine.logfile)>0) && engine.loglevel
-			   && (logfile=fopen(engine.logfile,"a+"))){
-				xverbose_setstream(logfile);
-				xerror_setstream(logfile);
+			else {
 				xverbose_setmaxlevel(engine.loglevel);
 				xerror_setmaxlevel(engine.loglevel);
-			}
-			else{
-				xverbose_setmaxlevel(0);
-				xerror_setmaxlevel(0);
-			}
-			if((strlen(engine.debugfile)>0) && engine.debuglevel
-			   && (debugfile=fopen(engine.debugfile,"a+"))){
-				xdebug_setstream(debugfile);
 				xdebug_setmaxlevel(engine.debuglevel);
 			}
-			else{
-				xdebug_setmaxlevel(0);
-			}
+
 		}
 
 		/* launch main function */
