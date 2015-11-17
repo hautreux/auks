@@ -132,7 +132,7 @@ int dispatcher_main_function(auksd_engine_t* engine,xqueue_t* socket_queue);
  *
  *  - SIGINT | SIGTERM : break main loop and exit program
  *  - SIGHUP : break main loop and reload configuration
- *  - SIGUSR2 : print stats 
+ *  - SIGUSR2 : print stats
  *
  */
 void
@@ -167,7 +167,7 @@ signal_handler(int signum)
  *  - loop or return on external trigger
  *
  */
-static void * 
+static void *
 processor_main_function(void* p_args)
 {
 	int fstatus = AUKS_ERROR ;
@@ -176,15 +176,15 @@ processor_main_function(void* p_args)
 
 	auksd_engine_t* engine;
 	xqueue_t* squeue;
-	
+
 	int incoming_socket;
 	int old_cancel_state;
 	int old_cancel_state_bis;
-	
+
 	wargs=(auksd_worker_args_t*)p_args;
 	if(wargs==NULL)
 		return NULL;
-	
+
 	engine=wargs->engine;
 	squeue=wargs->socket_queue;
 
@@ -204,10 +204,10 @@ processor_main_function(void* p_args)
 			if ( fstatus != 0 )
 				break;
 		}
-		
+
 		VERBOSE3("worker[%d] : incoming socket %d successfully "
 			 "dequeued",wargs->id,incoming_socket);
-		
+
 		/* disable cancellation, kerberize the connection and */
 		/* get the request */
 		fstatus=pthread_setcancelstate(PTHREAD_CANCEL_DISABLE,
@@ -216,7 +216,7 @@ processor_main_function(void* p_args)
 			ERROR2("worker[%d] : unable to disable cancellation");
 		}
 		else{
-			
+
 			/* process request */
 			fstatus=auksd_process_req(p_args,incoming_socket);
 			if(fstatus){
@@ -229,10 +229,10 @@ processor_main_function(void* p_args)
 					 "processing succeed",wargs->id,
 					 incoming_socket);
 			}
-			
+
 			/* close incoming socket */
 			close(incoming_socket);
-			
+
 			/* reenable cancellation */
 			fstatus=pthread_setcancelstate(old_cancel_state,
 						       &old_cancel_state_bis);
@@ -240,14 +240,14 @@ processor_main_function(void* p_args)
 				ERROR2("worker[%d] : unable to reenable old "
 				       "cancellation state ");
 			}
-			
+
 		}
 		/*_*/ /* disable cancellation */
-		
+
 		pthread_testcancel();
 	}
 	while(1);
-	
+
 	return NULL;
 }
 
@@ -269,7 +269,7 @@ cleaner_main_function(void* p_args)
 	auksd_engine_t* engine;
 
 	time_t start,end;
-	
+
 	int nbcred;
 
 	wargs=(auksd_worker_args_t*)p_args;
@@ -277,7 +277,7 @@ cleaner_main_function(void* p_args)
 		return NULL;
 
 	engine=wargs->engine;
-	
+
 	while(!eof_worker_flag)
 	{
 
@@ -295,7 +295,7 @@ cleaner_main_function(void* p_args)
 				 "in ~%us (%d creds removed)",wargs->id,
 				 end,nbcred);
 		}
-		
+
 		/* check end signal */
 		if ( eof_worker_flag )
 			break;
@@ -320,11 +320,11 @@ static void *
 worker_main_function(void* p_args)
 {
 	auksd_worker_args_t* wargs;
-	
+
 	wargs=(auksd_worker_args_t*)p_args;
 	if(wargs==NULL)
 		return NULL;
-	
+
 	if(wargs->id==0){
 		/* cleaner thread */
 		cleaner_main_function(p_args);
@@ -352,13 +352,13 @@ int
 dispatcher_main_function(auksd_engine_t* engine,xqueue_t* socket_queue)
 {
 	int fstatus = AUKS_ERROR ;
-	
+
 	int socket;
 	int incoming_socket;
-	
+
 	char* hostname;
 	char* port;
-	
+
 	unsigned long successfull_dispatch=0;
 	int queued_item_nb=0;
 
@@ -387,7 +387,7 @@ dispatcher_main_function(auksd_engine_t* engine,xqueue_t* socket_queue)
 	}
 	VERBOSE("dispatcher: auksd stream created on %s:%s (fd is %d)",
 		hostname,port,socket);
-  
+
 	/* configure stream */
 	if(xstream_listen(socket,socket_queue->freelist.item_nb)){
 		ERROR("dispatcher: unable to specify socket %d listening queue",
@@ -399,7 +399,7 @@ dispatcher_main_function(auksd_engine_t* engine,xqueue_t* socket_queue)
 
 	/* stream accept loop */
 	while(!eof_main_loop_flag){
-		
+
 		incoming_socket=xstream_accept(socket);
 		if(incoming_socket<0 && !(eof_main_loop_flag || 
 					  print_stats_flag)) {
@@ -411,7 +411,7 @@ dispatcher_main_function(auksd_engine_t* engine,xqueue_t* socket_queue)
 				"requests");
 		}
 		else if ( incoming_socket >= 0 ) {
-			
+
 			fstatus=xqueue_enqueue(socket_queue,&incoming_socket,
 					       sizeof(int));
 			if(fstatus){
@@ -425,7 +425,7 @@ dispatcher_main_function(auksd_engine_t* engine,xqueue_t* socket_queue)
 					 incoming_socket);
 				successfull_dispatch++;
 			}
-			
+
 		}
 		/*_*/ /* accept event */
 
@@ -437,16 +437,16 @@ dispatcher_main_function(auksd_engine_t* engine,xqueue_t* socket_queue)
 				queued_item_nb);
 			print_stats_flag=0 ;
 		}
-				
+
 	}
 
 	/* print stats on exit */
 	VERBOSE("dispatcher: %u connections dispatched",successfull_dispatch);
 	fstatus = AUKS_SUCCESS ;
 
-create_exit:		
+create_exit:
 	close(socket);
-exit:	
+exit:
 	return fstatus;
 }
 
@@ -467,30 +467,30 @@ int auksd_main_loop(auksd_engine_t* engine)
 
 	int fstatus;
 	int status;
-	
+
 	int i;
-	
+
 	auks_cred_repo_t cred_repo;
 	xqueue_t socket_queue;
-	
+
 	eof_main_loop_flag=0;
 	eof_worker_flag=0;
-	
+
 	int repo_size;
 	int queue_size;
 	int worker_nb;
-	
+
 	int queued_item_nb;
 	int launched_worker_nb=0;
 	pthread_attr_t worker_attr;
 	size_t worker_stacksize= 3 * PTHREAD_STACK_MIN ;
-	
+
 	auksd_worker_args_t* worker_args;
-	
+
 	worker_nb = engine->threads_nb + 1; // add the cleaner thread
 	queue_size = engine->queue_size ;
 	repo_size = engine->repo_size ;
-	
+
 	/* initialize cred tree */
 	fstatus = auks_cred_repo_init(&cred_repo,engine->cachedir,
 				      repo_size);
@@ -499,7 +499,7 @@ int auksd_main_loop(auksd_engine_t* engine)
 		      auks_strerror(fstatus));
 		goto exit;
 	}
-	
+
 	/* initialize socket queue */
 	fstatus=xqueue_init(&socket_queue,queue_size,sizeof(int));
 	if(fstatus){
@@ -514,7 +514,7 @@ int auksd_main_loop(auksd_engine_t* engine)
 		fstatus = AUKS_ERROR_DAEMON_THREAD_CONFIG;
 		goto xqueue_exit;
 	}
-    
+
 	/* set worker thread attributes */
 	status=pthread_attr_setdetachstate(&worker_attr,
 					   PTHREAD_CREATE_JOINABLE);
@@ -540,7 +540,7 @@ int auksd_main_loop(auksd_engine_t* engine)
 	size_t ss;
 	pthread_attr_getstacksize(&worker_attr,&ss);
 	VERBOSE("auksd     : worker threads stacksize is %u",ss);
-	
+
 	/* initialize worker args array */
 	worker_args=(auksd_worker_args_t*)
 		malloc(worker_nb*sizeof(auksd_worker_args_t));
@@ -550,7 +550,7 @@ int auksd_main_loop(auksd_engine_t* engine)
 		goto p_sattr_exit;
 	}
 	VERBOSE("auksd     : worker args array successfully allocated");
-	  
+
 	/* initialize and launch workers */
 	for(i=0;i<worker_nb;i++){
 		worker_args[i].id=i;
@@ -602,7 +602,7 @@ int auksd_main_loop(auksd_engine_t* engine)
 	}
 
 	VERBOSE("auksd     : exiting");
-	  
+
 	free(worker_args);
 
 p_sattr_exit:
@@ -615,7 +615,7 @@ xqueue_exit:
 repo_exit:
 	auks_cred_repo_free_contents(&cred_repo);
 
-exit:  
+exit:
 	return fstatus;
 }
 
@@ -627,12 +627,12 @@ main(int argc,char** argv)
 
 	int i;
 	int background_flag=0;
-	
+
 	int debug_level=0;
 	int verbose_level=0;
 	char* conf_file_string;
 	char* working_directory;
-	
+
 	/* options processing variables */
 	char* progname;
 	char* optstring="dvhf:";
@@ -643,24 +643,24 @@ main(int argc,char** argv)
 \t-v\t\tincrease verbose level\n		\
 \t-f conffile\tConfiguration file\n\n";
 	char  option;
-	
+
 	/* signal handling variables */
 	struct sigaction saction;
-	
+
 	/* auksd engine */
 	auksd_engine_t engine;
-	
+
 	/* logging */
 	FILE* logfile=NULL;
 	FILE* debugfile=NULL;
-	
+
 	/* get current program name */
 	progname=rindex(argv[0],'/');
 	if(progname==NULL)
 		progname=argv[0];
 	else
 		progname++;
-	
+
 	conf_file_string = NULL;
 
 	/* process options */
@@ -748,7 +748,7 @@ main(int argc,char** argv)
 				/* fork, father goes away */
 				if(fork() != 0)
 					exit(EXIT_SUCCESS);
-		  
+
 				/* go into working directory */
 				if(strlen(engine.cachedir)>0)
 				{
@@ -759,12 +759,12 @@ main(int argc,char** argv)
 				chdir(working_directory);
 				VERBOSE("working directory is now %s",
 					working_directory);
-		  
+
 				/* change session ID, fork and keep only son */
 				setsid();
 				if(fork() != 0)
 					exit(EXIT_SUCCESS);
-		  
+
 				/* close all open file descriptor */
 				for(i=0;i<FOPEN_MAX;i++)
 					close(i);
@@ -784,7 +784,7 @@ main(int argc,char** argv)
 				fclose(debugfile);
 				debugfile=NULL;
 			}
-			if((strlen(engine.logfile)>0) && engine.loglevel 
+			if((strlen(engine.logfile)>0) && engine.loglevel
 			   && (logfile=fopen(engine.logfile,"a+"))){
 				xverbose_setstream(logfile);
 				xerror_setstream(logfile);
@@ -795,7 +795,7 @@ main(int argc,char** argv)
 				xverbose_setmaxlevel(0);
 				xerror_setmaxlevel(0);
 			}
-			if((strlen(engine.debugfile)>0) && engine.debuglevel 
+			if((strlen(engine.debugfile)>0) && engine.debuglevel
 			   && (debugfile=fopen(engine.debugfile,"a+"))){
 				xdebug_setstream(debugfile);
 				xdebug_setmaxlevel(engine.debuglevel);
@@ -816,7 +816,7 @@ main(int argc,char** argv)
 
 	}
 	/*_*/
-  
+
 conf_exit:
 	/* free config file */
 	XFREE(conf_file_string);
