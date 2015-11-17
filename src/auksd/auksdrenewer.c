@@ -334,6 +334,7 @@ main(int argc,char** argv)
 
 	int i;
 	int background_flag=0;
+	int foreground_flag=0;
 
 	int debug_level=0;
 	int verbose_level=0;
@@ -346,13 +347,14 @@ main(int argc,char** argv)
 
 	/* options processing variables */
 	char* progname;
-	char* optstring="dvhf:l:";
-	char* short_options_desc="\nUsage : %s [-h] [-dv] [-f conffile] [-l logfile]\n\n";
+	char* optstring="dvhf:l:F";
+	char* short_options_desc="\nUsage : %s [-h] [-dv] [-F] [-f conffile] [-l logfile]\n\n";
 	char* addon_options_desc="\
-\t-h\t\tshow this message\n\
-\t-d\t\tincrease debug level\n\
-\t-v\t\tincrease verbose level\n\
-\t-f conffile\tConfiguration file\n\
+\t-h\t\tshow this message\n \
+\t-d\t\tincrease debug level (force foreground mode)\n \
+\t-v\t\tincrease verbose level (force forground mode)\n \
+\t-F\t\trun in foreground\n \
+\t-f conffile\tConfiguration file\n \
 \t-l logfile\tlog file\n\n";
 	char  option;
 
@@ -390,6 +392,9 @@ main(int argc,char** argv)
 			break;
 		case 'f' :
 			conf_file_string=strdup(optarg);
+			break;
+		case 'F' :
+			foreground_flag = 1;
 			break;
 		case 'l' :
 			default_logfile_str=strdup(optarg);
@@ -463,10 +468,10 @@ main(int argc,char** argv)
 
 		/* no display required, jump into background */
 		if( (!default_verbose_level && !default_debug_level) ||
-		   default_logfile_str != NULL )
+		    default_logfile_str != NULL )
 		{
 			/* go to background mode if not already done */
-			if(!background_flag)
+			if(!background_flag && !foreground_flag)
 			{
 				/* fork, father goes away */
 				if(fork() != 0)
@@ -490,51 +495,60 @@ main(int argc,char** argv)
 				background_flag=1;
 			}
 
+			if (default_verbose_level)
+				verbose_level = default_verbose_level;
+			else
+				verbose_level = engine.renewer_loglevel;
 
-			/* (re)open logfile and debug file */
-			if(logfile!=NULL){
-				fclose(logfile);
-				logfile=NULL;
+			if (default_debug_level)
+				debug_level = default_debug_level;
+			else
+				debug_level = engine.renewer_loglevel;
+
+			/* in bg mode : (re)open logfile and debug file
+			 * in fg mode : set log level according to conf file */
+			if (!foreground_flag) {
+				if(logfile != NULL){
+					fclose(logfile);
+					logfile=NULL;
+				}
+				if(debugfile != NULL){
+					fclose(debugfile);
+					debugfile=NULL;
+				}
+
+				if (default_logfile_str != NULL)
+					logfile_str = default_logfile_str;
+				else
+					logfile_str = engine.renewer_logfile;
+
+				if((strlen(logfile_str) > 0) && verbose_level
+				   && (logfile = fopen(logfile_str,"a+"))) {
+					xverbose_setstream(logfile);
+					xerror_setstream(logfile);
+					xverbose_setmaxlevel(verbose_level);
+					xerror_setmaxlevel(verbose_level);
+				}
+				else {
+					xverbose_setmaxlevel(0);
+					xerror_setmaxlevel(0);
+				}
+
+				if((strlen(engine.renewer_debugfile) > 0) &&
+				   debug_level &&
+				   (debugfile = fopen(engine.renewer_debugfile,
+						      "a+"))) {
+					xdebug_setstream(debugfile);
+					xdebug_setmaxlevel(debug_level);
+				}
+				else {
+					xdebug_setmaxlevel(0);
+				}
 			}
-			if(debugfile!=NULL){
-				fclose(debugfile);
-				debugfile=NULL;
-			}
-
-			if ( default_logfile_str != NULL )
-				logfile_str = default_logfile_str ;
-			else
-				logfile_str = engine.renewer_logfile ;
-
-			if ( default_verbose_level )
-				verbose_level = default_verbose_level ;
-			else
-				verbose_level = engine.renewer_loglevel ;
-
-			if ( default_debug_level )
-				debug_level = default_debug_level ;
-			else
-				debug_level = engine.renewer_loglevel ;
-
-
-			if((strlen(logfile_str)>0) && verbose_level
-			   && (logfile=fopen(logfile_str,"a+"))){
-				xverbose_setstream(logfile);
-				xerror_setstream(logfile);
+			else {
 				xverbose_setmaxlevel(verbose_level);
 				xerror_setmaxlevel(verbose_level);
-			}
-			else{
-				xverbose_setmaxlevel(0);
-				xerror_setmaxlevel(0);
-			}
-			if((strlen(engine.renewer_debugfile)>0) && debug_level
-			   && (debugfile=fopen(engine.renewer_debugfile,"a+"))){
-				xdebug_setstream(debugfile);
 				xdebug_setmaxlevel(debug_level);
-			}
-			else{
-				xdebug_setmaxlevel(0);
 			}
 		}
 
