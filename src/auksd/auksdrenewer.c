@@ -546,6 +546,10 @@ main(int argc,char** argv)
 				}
 			}
 			else {
+				FILE* stream=stderr;
+				xverbose_setstream(stream);
+				xerror_setstream(stream);
+				xdebug_setstream(stream);
 				xverbose_setmaxlevel(verbose_level);
 				xerror_setmaxlevel(verbose_level);
 				xdebug_setmaxlevel(debug_level);

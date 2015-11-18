@@ -814,6 +814,10 @@ main(int argc,char** argv)
 				}
 			}
 			else {
+				FILE* stream=stderr;
+				xverbose_setstream(stream);
+				xerror_setstream(stream);
+				xdebug_setstream(stream);
 				xverbose_setmaxlevel(engine.loglevel);
 				xerror_setmaxlevel(engine.loglevel);
 				xdebug_setmaxlevel(engine.debuglevel);
