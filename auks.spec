@@ -41,9 +41,8 @@ Requires:       chkconfig
 Requires:       initscripts
 %endif
 
-#  Allow override of sysconfdir via _auks_sysconfdir.
+#  set default _auks_sysconfdir to /etc/auks
 %{!?_auks_sysconfdir: %global _auks_sysconfdir /etc/auks}
-%define _sysconfdir %_auks_sysconfdir
 
 # Compiled with slurm plugin as default (disable using --without slurm)
 %bcond_without slurm
@@ -80,7 +79,7 @@ Plugins that provides Kerberos Credential Support to Slurm
 
 %build
 autoreconf -fvi
-%configure %{?with_slurm:--with-slurm}
+%configure CFLAGS=-DSYSCONFDIR=\\\"%{_auks_sysconfdir}\\\" %{?with_slurm:--with-slurm}
 make %{?_smp_mflags}
 
 %install
@@ -105,8 +104,8 @@ install -Dp -m0755 etc/init.d.auksdrenewer %{buildroot}%{_initrddir}/auksdrenewe
 install -Dp -m0755 etc/init.d.aukspriv %{buildroot}%{_initrddir}/aukspriv
 %endif
 install -D -m0644 etc/logrotate.d.auks $RPM_BUILD_ROOT/etc/logrotate.d/auks
-install -D -m0644 etc/auks.conf.example ${RPM_BUILD_ROOT}%{_sysconfdir}/auks.conf.example
-install -D -m0644 etc/auks.acl.example ${RPM_BUILD_ROOT}%{_sysconfdir}/auks.acl.example
+install -D -m0644 etc/auks.conf.example ${RPM_BUILD_ROOT}%{_auks_sysconfdir}/auks.conf.example
+install -D -m0644 etc/auks.acl.example ${RPM_BUILD_ROOT}%{_auks_sysconfdir}/auks.acl.example
 
 mkdir -pm 0700 ${RPM_BUILD_ROOT}%{_localstatedir}/cache/auks
 
@@ -119,8 +118,8 @@ install -D -m644 src/plugins/slurm/slurm-spank-auks.conf ${RPM_BUILD_ROOT}/etc/s
 %{_libdir}/libauksapi.so.*
 %{_bindir}/*
 %{_sbindir}/*
-%{_sysconfdir}/auks.conf.example
-%{_sysconfdir}/auks.acl.example
+%{_auks_sysconfdir}/auks.conf.example
+%{_auks_sysconfdir}/auks.acl.example
 %if 0%{?_with_systemd}
 %{_unitdir}/auksd.service
 %{_unitdir}/auksdrenewer.service
