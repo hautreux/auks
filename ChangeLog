@@ -1,3 +1,12 @@
+11/18/2015  Matthieu Hautreux <matthieu.hautreux@cea.fr>
+
+	* auks-0.4.4-3
+	* auksd/auksdrenewer: add foreground mode using -F flag
+	* systemd: now use 'simple' systemd type using the foreground
+	  mode and collectl logs on stderr (managed using journalctl)
+	* specfile: correct a regression preventing from putting
+	  initscripts in the right directory
+
 10/19/2015  Matthieu Hautreux <matthieu.hautreux@cea.fr>
 
 	* auks-0.4.3-3
