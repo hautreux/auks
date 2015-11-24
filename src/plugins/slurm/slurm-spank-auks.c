@@ -127,6 +127,10 @@ static int auks_mode = AUKS_MODE_DISABLED;
 /* enable/disable acquired ticket access to next spank plugins in the stack */
 static int auks_spankstack = 0;
 
+/* enforce auks client stage success when set to 1 (no silent disabling of
+ * auks when no ticket is found on the client side) */
+static int auks_enforced = 0;
+
 static uid_t auks_minimum_uid = 0;
 
 volatile pid_t renewer_pid;
@@ -357,14 +361,33 @@ int spank_auks_local_user_init (spank_t sp, int ac, char **av)
 
 	/* send credential to auks daemon */
 	fstatus = auks_api_add_cred(&engine,NULL);
-	/* If no credential cache, assume no auks support to avoid */
-	/* printing error messages to non kerberized users */
-	if ( fstatus == AUKS_ERROR_KRB5_CRED_READ_CC ) {
-		xinfo("cred forwarding failed : %s",auks_strerror(fstatus));
-		xinfo("no readable credential cache : disabling auks support");
-		fstatus = setenv("SLURM_SPANK_AUKS","no",0);
-		if ( fstatus != 0 ) {
-			xerror("unable to set SLURM_SPANK_AUKS to no");
+
+	if (fstatus == AUKS_ERROR_KRB5_CRED_READ_CC) {
+		if (!auks_enforced) {
+			/* If no credential cache and we are not in enforced
+			 * mode, assume no auks support to avoid printing error
+			 * messages to non kerberized users */
+			xinfo("cred forwarding failed : %s",
+			      auks_strerror(fstatus));
+			xinfo("no readable credential cache : "
+			      "disabling auks support");
+			fstatus = setenv("SLURM_SPANK_AUKS","no",0);
+			if ( fstatus != 0 ) {
+				xerror("unable to set SLURM_SPANK_AUKS to no");
+			}
+		}
+		else {
+			/* set env var to done to let slurmstepds try to
+			 * grab something from the auks repo or fail,
+			 * thus, depending on th optional/required conf of
+			 * this plugin in Spank, we might be able to
+			 * use a previously sent credential even if this
+			 * stage fails */
+			xerror("cred forwarding failed : %s [enforced]",
+			      auks_strerror(fstatus));
+			xinfo("no readable credential cache : considering"
+			      " success but returning err to the spank task");
+			setenv("SLURM_SPANK_AUKS","done",0);
 		}
 	}
 	else if ( fstatus != AUKS_SUCCESS ) {
@@ -714,6 +737,9 @@ _parse_plugstack_conf (spank_t sp, int ac, char *av[])
 		}
 		else if (strncmp ("spankstackcred=yes", av[i], 18) == 0) {
 		        auks_spankstack = 1;
+		}
+		else if (strncmp ("enforced", av[i], 8) == 0) {
+		        auks_enforced = 1;
 		}
 		else if (strncmp ("minimum_uid=", av[i], 12) == 0) {
 		        auks_minimum_uid = (uid_t) strtol(av[i]+12,NULL,10);

@@ -91,6 +91,24 @@ can be found on the system.
 Note that this can cause performance degradation and delay the termination of
 the step. The default mode is \fBno\fR to disable the feature. Available modes
 are \fByes\fR|\fBall\fR to flush every FS using sync().
+.LP
+.TP
+\fBenforced\fR
+when set, consider that a missing credential at submission will be treated
+as an error by the Spank stack. Spank plugins being able to be configured
+as optional or required, set internal auks status to \fBdone\fR  in order
+to allow slurmstepds to acquire a previously pushed credential if it exists
+and the mode is optional. When not set, auks will silently disable auks if
+no credential cache is available at submission time.
+.br
+To sum up :
+.br
+- if not set : transparently disable auks if no credential cache found
+.br
+- if set and this plugin is optional : enable auks, a previously credential
+might be available
+.br
+- if set and this plugin is required : abort submission
 
 .SH "COPYING"
 .LP

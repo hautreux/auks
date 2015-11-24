@@ -1,3 +1,9 @@
+11/24/2015 Matthieu Hautreux <matthieu.hautreux@cea.fr>
+
+	* slurm/spank: add 'enforced' conf options to request for
+	  a valid credential at submission time or return an error
+	  to the spank stack. (see man auks.so)
+
 11/18/2015  Matthieu Hautreux <matthieu.hautreux@cea.fr>
 
 	* auks-0.4.4-3
