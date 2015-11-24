@@ -166,7 +166,7 @@ slurm_spank_init (spank_t sp, int ac, char *av[])
 {
 	spank_option_register(sp,spank_opts);
 	_parse_plugstack_conf(sp,ac,av);
-	
+
 	if (!spank_remote (sp))
 		return 0;
 	else
@@ -178,7 +178,7 @@ slurm_spank_init_post_opt (spank_t sp, int ac, char *av[])
 {
 	if ( spank_context() == S_CTX_ALLOCATOR )
 		return spank_auks_local_user_init(sp,ac,av);
-	else 
+	else
 		return 0;
 }
 
@@ -215,7 +215,7 @@ slurm_spank_task_exit (spank_t sp, int ac, char **av)
 
 	/* add this task to the count of exited tasks */
 	exited_tasks += 1 ;
-       
+
 	/* signal renew process */
 	if ( renewer_pid != 0 &&
 	     renewer_pid != -1 ) {
@@ -232,28 +232,28 @@ slurm_spank_task_exit (spank_t sp, int ac, char **av)
 				      strerror(errno));
 				return (-1);
 			}
-			if ( seteuid(uid) ) {				
+			if ( seteuid(uid) ) {
 				xerror("unable to switch to user uid : %s",
 				      strerror(errno));
 				setegid(getgid());
 				return (-1);
 			}
-			
-			/* sync all/some file systems to ensure dirty pages flush 
-			   while we are sure to still have a ticket to do that 
+
+			/* sync all/some file systems to ensure dirty pages flush
+			   while we are sure to still have a ticket to do that
 			   (see _sync_fs method for more details) */
 			_sync_fs();
 
 			/* kill the renewer process and wait for it */
 			kill(renewer_pid, SIGTERM);
 			waitpid(renewer_pid, NULL, 0);
-			
+
 			/* replace privileged uid/gid */
 			seteuid(getuid());
 			setegid(getgid());
-			
+
 		}
-		
+
 	}
 
 	return 0;
@@ -308,7 +308,7 @@ slurm_spank_exit (spank_t sp, int ac, char **av)
 {
 	if (!spank_remote (sp))
 		return 0;
-	else	
+	else
 		return spank_auks_remote_exit(sp,ac,av);
 }
 
@@ -324,9 +324,9 @@ int spank_auks_local_user_init (spank_t sp, int ac, char **av)
 {
 	int fstatus;
 	auks_engine_t engine;
-	
+
 	int mode;
-	
+
 	/* get required auks mode */
 	mode = _spank_auks_get_current_mode(sp,ac,av);
 	switch(mode) {
@@ -335,11 +335,11 @@ int spank_auks_local_user_init (spank_t sp, int ac, char **av)
 		xinfo("cred forwarding already done");
 		return 0;
 		break;
-		
+
 	case AUKS_MODE_DISABLED:
 	        return 0;
 		break;
-		
+
 	case AUKS_MODE_ENABLED:
 	        break;
 
@@ -354,7 +354,7 @@ int spank_auks_local_user_init (spank_t sp, int ac, char **av)
 		xerror("API init failed : %s",auks_strerror(fstatus));
 		return -1;
 	}
-	
+
 	/* send credential to auks daemon */
 	fstatus = auks_api_add_cred(&engine,NULL);
 	/* If no credential cache, assume no auks support to avoid */
@@ -377,10 +377,10 @@ int spank_auks_local_user_init (spank_t sp, int ac, char **av)
 			xerror("unable to set SLURM_SPANK_AUKS to done");
 		}
 	}
-	
+
 	/* unload auks conf */
 	auks_api_close(&engine);
-	
+
 	return fstatus;
 }
 
@@ -390,17 +390,17 @@ spank_auks_remote_init (spank_t sp, int ac, char *av[])
 {
 	int fstatus;
 	auks_engine_t engine;
-	
+
 	char *prev_krb5ccname = NULL;
 
 	static uint32_t jobid;
 	uid_t uid;
 	gid_t gid;
-	
+
 	mode_t omask;
 
 	int mode;
-	
+
 	/* get required auks mode */
 	mode = _spank_auks_get_current_mode(sp,ac,av);
 	switch(mode) {
@@ -421,13 +421,13 @@ spank_auks_remote_init (spank_t sp, int ac, char *av[])
 
 	/* set default auks cred cache length to 0 */
 	auks_credcache[0]='\0';
-	
+
 	/* get slurm jobid */
 	if (spank_get_item (sp, S_JOB_ID, &jobid) != ESPANK_SUCCESS) {
 		xerror("failed to get jobid: %s",strerror(errno));
 		return (-1);
 	}
-	
+
 	/* get slurm job user uid & gid */
 	if (spank_get_item (sp, S_JOB_UID, &uid) != ESPANK_SUCCESS) {
 		xerror("failed to get uid: %s", strerror(errno));
@@ -437,7 +437,7 @@ spank_auks_remote_init (spank_t sp, int ac, char *av[])
 		xerror("failed to get gid: %s", strerror(errno));
 		return (-1);
 	}
-	
+
 	/* build credential cache name */
 	fstatus = snprintf(auks_credcache,CREDCACHE_MAXLENGTH,
 			   "/tmp/krb5cc_%u_%u_XXXXXX",
@@ -447,7 +447,7 @@ spank_auks_remote_init (spank_t sp, int ac, char *av[])
 		xerror("unable to build auks credcache name");
 		goto exit;
 	}
-	
+
 	/* build unique credential cache */
 	omask = umask(S_IRUSR | S_IWUSR);
 	fstatus = mkstemp(auks_credcache);
@@ -467,14 +467,14 @@ spank_auks_remote_init (spank_t sp, int ac, char *av[])
 		}
 		setenv("KRB5CCNAME", auks_hostcredcache_file, 1);
 	}
-	
+
 	/* initialize auks API */
 	fstatus = auks_api_init(&engine,auks_conf_file);
 	if ( fstatus != AUKS_SUCCESS ) {
 		xerror("API init failed : %s",auks_strerror(fstatus));
 		goto exit;
 	}
-	
+
 	/* get user credential */
 	fstatus = auks_api_get_cred(&engine,uid,auks_credcache);
 	if ( fstatus != AUKS_SUCCESS ) {
@@ -485,7 +485,7 @@ spank_auks_remote_init (spank_t sp, int ac, char *av[])
 		goto unload;
 	}
 	xinfo("user '%u' cred stored in %s",uid,auks_credcache);
-	
+
 	/* change file owner */
 	fstatus = chown(auks_credcache,uid,gid);
 	if ( fstatus != 0 ) {
@@ -493,7 +493,7 @@ spank_auks_remote_init (spank_t sp, int ac, char *av[])
 		      auks_credcache,strerror(errno));
 		goto unload;
 	}
-	
+
 	/* set cred cache name in user env */
 	fstatus = spank_setenv(sp,"KRB5CCNAME",auks_credcache,1);
 	if ( fstatus != 0 ) {
@@ -519,8 +519,8 @@ spank_auks_remote_init (spank_t sp, int ac, char *av[])
 unload:
 	/* unload auks conf */
 	auks_api_close(&engine);
-	
-exit:    
+
+exit:
 	return (fstatus);
 }
 
@@ -544,11 +544,11 @@ spank_auks_remote_exit (spank_t sp, int ac, char **av)
 	/* now only process in remote mode */
 	if (!spank_remote (sp))
 		return (0);
-	
+
 	/* only process if a cred file was defined in a previous call */
 	if ( strnlen(auks_credcache,CREDCACHE_MAXLENGTH) == 0 )
 		return 0;
-	
+
 	/* get slurm job user uid & gid */
 	if (spank_get_item (sp, S_JOB_UID, &uid) != ESPANK_SUCCESS) {
 		xerror("failed to get uid: %s", strerror(errno));
@@ -574,8 +574,8 @@ spank_auks_remote_exit (spank_t sp, int ac, char **av)
 		return (-1);
 	}
 
-	/* sync all/some file systems to ensure dirty pages flush 
-	   while we are sure to still have a ticket to do that 
+	/* sync all/some file systems to ensure dirty pages flush
+	   while we are sure to still have a ticket to do that
 	   (see _sync_fs method for more details) */
 	_sync_fs();
 
@@ -587,7 +587,7 @@ spank_auks_remote_exit (spank_t sp, int ac, char **av)
 	}
 	else
 		xinfo("user '%u' cred cache %s removed",uid,auks_credcache);
-	
+
 	/* replace privileged uid/gid */
 	seteuid(getuid());
 	setegid(getgid());
@@ -608,13 +608,13 @@ _spank_auks_get_current_mode(spank_t sp, int ac, char *av[])
 
 	char* envval=NULL;
 	uid_t uid;
-	
+
 	/* check if conf allow the user to do auks stuff */
 	if ( auks_minimum_uid > 0 ) {
-		
+
 		/* get slurm job user uid */
 		if (spank_remote (sp)) {
-			if (spank_get_item (sp, S_JOB_UID, &uid) 
+			if (spank_get_item (sp, S_JOB_UID, &uid)
 			    != ESPANK_SUCCESS) {
 				xerror("failed to get uid: %s",
 				       strerror(errno));
@@ -642,7 +642,7 @@ _spank_auks_get_current_mode(spank_t sp, int ac, char *av[])
 	else {
 		envval = getenv(SPANK_AUKS_ENVVAR);
 	}
-		
+
 	/* if env variable is set, use it */
 	if ( envval != NULL ) {
 		/* check env var value (can be yes|no|done)*/
@@ -660,7 +660,7 @@ _spank_auks_get_current_mode(spank_t sp, int ac, char *av[])
 		/* or configuration file auks flag */
 		return auks_mode;
 	}
-	
+
 }
 
 /* parse command line option */
@@ -697,11 +697,11 @@ _parse_plugstack_conf (spank_t sp, int ac, char *av[])
 {
 	int i;
 	char* elt;
-	
+
 	for (i = 0; i < ac; i++) {
 		elt = av[i];
 		if ( strncmp(elt,"conf=",5) == 0 ) {
-			auks_conf_file=strdup(elt+5);	
+			auks_conf_file=strdup(elt+5);
 		}
 		else if ( strncmp(elt,"sync=",5) == 0 ) {
 			auks_sync_mode=strdup(elt+5);
@@ -730,22 +730,22 @@ _parse_plugstack_conf (spank_t sp, int ac, char *av[])
 					"parameter '%s'",av[i]+14);
 		}
 	}
-	
+
 	return (0);
 }
 
-/* 
+/*
  * Parameterized synchronization of FS page cache
  *
  * With kerberized FS, asynchronous dirty pages flush is a problem.
- * Indeed, if no kerberos ticket is available when the flush occurs, 
+ * Indeed, if no kerberos ticket is available when the flush occurs,
  * the operation fails resulting in incomplete files and data losses.
  *
  * We thus need to ensure that Kerberized FS dirty pages are flushed
  * before removing a ticket which can potentially be the last valid
  * one for the user the dirty pages belong to.
  *
- * Note that as a ticket has a limited validity and a sync operation can 
+ * Note that as a ticket has a limited validity and a sync operation can
  * potentially takes a long time, if a ticket renewer ensures the renewal
  * of the ticket, it must persist while the sync operation occurs to ensure
  * that the ticket will be kept valid during the flush timelapse.
