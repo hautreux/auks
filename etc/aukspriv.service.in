@@ -9,4 +9,4 @@ ExecStart=@sbindir@/aukspriv $AUKSPRIV_OPTIONS
 GuessMainPID=true
 
 [Install]
-WantedBy=auksdrenewer.service
+WantedBy=multi-user.target

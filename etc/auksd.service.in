@@ -10,4 +10,4 @@ ExecReload=/bin/kill -HUP $MAINPID
 Restart=on-failure
 
 [Install]
-WantedBy=auksdrenewer.service
+WantedBy=multi-user.target
