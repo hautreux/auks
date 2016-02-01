@@ -1,6 +1,7 @@
 [Unit]
 Description=Auks Credentials Renewer Daemon
 After=network.target
+Wants=aukspriv.service
 
 [Service]
 Type=simple
