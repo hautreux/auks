@@ -1,3 +1,7 @@
+02/02/2016 Matthieu Hautreux <matthieu.hautreux@cea.fr>
+
+	* Fix systemd dependencies (patch from Robbert Eggermont, TU Delft)
+
 11/24/2015 Matthieu Hautreux <matthieu.hautreux@cea.fr>
 
 	* slurm/spank: add 'enforced' conf options to request for
