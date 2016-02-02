@@ -188,6 +188,8 @@ related to replay attacks. The default is \fByes\fR.
 \fBLogFile\fR
 specifies the file in which to log AUKS daemon details. 
 The default is \fB/var/log/auksd.log\fR.
+Note that when launched using systemd, this parameter is silently ignored as
+logs are printed to stdout and managed using journalctl.
 .TP
 \fBLogLevel\fR
 specifies the level of verbosity to use. The default is \fB1\fR and only logs
@@ -197,6 +199,8 @@ when the daemon is signaled with SIGUSR2.
 \fBDebugFile\fR
 specifies the file in which to put AUKS daemon debug details.
 The default is \fB/var/log/auksd.log\fR.
+Note that when launched using systemd, this parameter is silently ignored as
+debug infos are printed to stdout and managed using journalctl.
 .TP
 \fBDebugLevel\fR
 specifies the level of debug to use. The default is \fB0\fR which 
@@ -237,6 +241,8 @@ The following parameters are only used by \fBauksdrenewer\fR.
 \fBLogFile\fR
 specifies the file in which to log \fBauksdrenewer\fR details. 
 The default is \fB/var/log/auksdrenewer.log\fR.
+Note that when launched using systemd, this parameter is silently ignored as
+logs are printed to stdout and managed using journalctl.
 .TP
 \fBLogLevel\fR
 specifies the level of verbosity to use. The default is \fB1\fR.
@@ -244,6 +250,8 @@ specifies the level of verbosity to use. The default is \fB1\fR.
 \fBDebugFile\fR
 specifies the file in which to put \fBauksdrenewer\fR debug details.
 The default is \fB/var/log/auksdrenewer.log\fR.
+Note that when launched using systemd, this parameter is silently ignored as
+debug infos are printed to stdout and managed using journalctl.
 .TP
 \fBDebugLevel\fR
 specifies the level of debug to use. The default is \fB0\fR which 
