@@ -4,8 +4,7 @@ After=network.target
 
 [Service]
 Type=forking
-EnvironmentFile=-/etc/sysconfig/aukspriv
-ExecStart=@sbindir@/aukspriv $AUKSPRIV_OPTIONS
+ExecStart=/bin/sh -c 'source /etc/sysconfig/aukspriv && @sbindir@/aukspriv $AUKSPRIV_OPTIONS'
 GuessMainPID=true
 
 [Install]
