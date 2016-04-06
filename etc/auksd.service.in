@@ -8,6 +8,7 @@ EnvironmentFile=-/etc/sysconfig/auksd
 ExecStart=@sbindir@/auksd -F $AUKSPRIV_OPTIONS
 ExecReload=/bin/kill -HUP $MAINPID
 Restart=on-failure
+LimitNOFILE=32768
 
 [Install]
 WantedBy=multi-user.target

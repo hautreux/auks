@@ -1,3 +1,7 @@
+04/06/2016 Matthieu Hautreux <matthieu.hautreux@cea.fr>
+
+    * auksd/systemd: set max open fds limit to 32k
+
 02/02/2016 Matthieu Hautreux <matthieu.hautreux@cea.fr>
 
     * aukspriv/systemd: allow shell commands in environment file
