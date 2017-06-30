@@ -1,0 +1,25 @@
+.TH "pam_auks.so.8" "Jun 2017" "David Johnson" "pam_auks.so"
+
+.SH "NAME"
+pam_auks.so \- AUKS PAM session plugin
+
+.SH "SYNOPSIS"
+session	optional	\fBpam_auks.so\fR
+or
+-session	optional	\fBpam_auks.so\fR
+
+\fB
+.SH "DESCRIPTION"
+
+.LP
+\fBpam_auks.so\fR is a PAM plugin that updates krb5 credentials 
+to AUKS whenever the user logs in or unlocks their screen.
+This plugin is enabled by configuring /etc/pam.d/postlogin
+
+.SH "COPYING"
+.LP
+Copyright  (2017)
+.br
+
+.SH "SEE ALSO"
+.BR auks (1),

@@ -1,2 +1,2 @@
 
-SUBDIRS = slurm
+SUBDIRS = slurm pam
