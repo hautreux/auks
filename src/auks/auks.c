@@ -129,7 +129,7 @@ main(int argc,char** argv)
 \t-C ccache\tConfiguration file\n\
 \t-u uid\t\tuid of requested cred owner (get request only)\n\n";
 
-	char  option;
+	int  option;
   
 	auks_engine_t engine;
 
