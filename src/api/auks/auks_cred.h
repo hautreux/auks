@@ -84,7 +84,7 @@
 #define AUKS_CRED_INVALID_TIME       0
 #define AUKS_CRED_FILE_MAX_LENGTH  128
 
-#define AUKS_CRED_DATA_MAX_LENGTH 2048
+#define AUKS_CRED_DATA_MAX_LENGTH 4096
 
 typedef struct auks_cred_info {
 	char principal[AUKS_PRINCIPAL_MAX_LENGTH + 1];
