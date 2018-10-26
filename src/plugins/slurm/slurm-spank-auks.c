@@ -290,6 +290,9 @@ slurm_spank_user_init (spank_t sp, int ac, char **av)
 		xerror("unable to launch renewer process");
 	}
 	else if ( renewer_pid == 0 ) {
+		sigset_t mask;
+		sigemptyset(&mask);
+		sigprocmask(SIG_SETMASK, &mask, NULL);
 		char *argv[4];
 		argv[0]= BINDIR "/auks" ;
 		argv[1]="-R";argv[2]="loop";
