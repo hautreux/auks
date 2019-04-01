@@ -1,3 +1,8 @@
+04/01/2019 Matthieu Hautreux <matthieu.hautreux@cea.fr>
+
+	* auks-0.4.4-2
+	* fix #24: slurmstepd not killing auks process
+
 04/06/2016 Matthieu Hautreux <matthieu.hautreux@cea.fr>
 
     * auksd/systemd: set max open fds limit to 32k

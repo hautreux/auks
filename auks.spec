@@ -9,7 +9,7 @@
 Summary: Aside Utility for Kerberos Support
 Name: auks
 Version: 0.4.4
-Release: 1%{?dist}
+Release: 2%{?dist}
 License: CeCILL-C License
 Group: System Environment/Base
 URL: http://sourceforge.net/projects/auks/
@@ -150,6 +150,8 @@ install -D -m644 src/plugins/slurm/slurm-spank-auks.conf ${RPM_BUILD_ROOT}/etc/s
 %endif
 
 %changelog
+* Mon Apr 01 2019 Matthieu Hautreux <matthieu.hautreux@cea.fr> - 0.4.4-2
+- Fixed #24: slurmstepd not killing auks process
 * Wed Nov 18 2015 Matthieu Hautreux <matthieu.hautreux@cea.fr> - 0.4.4-1
 - Correct a regression resulting in badly located initscripts
 * Mon Oct 19 2015 Matthieu Hautreux <matthieu.hautreux@cea.fr> - 0.4.3-3
