@@ -150,7 +150,7 @@ install -D -m644 src/plugins/slurm/slurm-spank-auks.conf ${RPM_BUILD_ROOT}/etc/s
 %endif
 
 %changelog
-* Mon Apr 01 2019 Matthieu Hautreux <matthieu.hautreux@cea.fr> - 0.4.4-2
+* Mon Apr 01 2019 Matthieu Hautreux <matthieu.hautreux@cea.fr> - 0.4.5-1
 - Fixed #24: slurmstepd not killing auks process
 * Wed Nov 18 2015 Matthieu Hautreux <matthieu.hautreux@cea.fr> - 0.4.4-1
 - Correct a regression resulting in badly located initscripts
