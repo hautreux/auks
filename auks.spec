@@ -8,8 +8,8 @@
 
 Summary: Aside Utility for Kerberos Support
 Name: auks
-Version: 0.4.4
-Release: 2%{?dist}
+Version: 0.4.5
+Release: 1%{?dist}
 License: CeCILL-C License
 Group: System Environment/Base
 URL: http://sourceforge.net/projects/auks/
