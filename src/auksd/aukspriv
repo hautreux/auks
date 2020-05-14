@@ -22,9 +22,6 @@
 #                            default value is the first princ found in 
 #                            the keytab
 #
-#  AUKS_PRIV_CCACHE_APPEND : set the string to append to ccache pattern
-#                            default value is no string to append
-#
 #  AUKS_PRIV_LIFETIME      : set the credential lifetime in seconds
 #                            default value is 36000 (10h)
 #
@@ -203,34 +200,33 @@ if [[ -n ${AUKS_PRIV_USER} ]] && \
 
     while [ 1 -eq 1 ]
       do
-    
-      ccache="/tmp/krb5cc_$(id -u ${AUKS_PRIV_USER})${AUKS_PRIV_CCACHE_APPEND}"
+      if [[ ${AUKS_PRIV_USER} == "root" ]]; then
+	  # If we're targeting the root user, that's easy stuff.
+	  ERROR=$(${timeout_cmd} -s9 ${AUKS_PRIV_KINIT_TIMEOUT} ${kinit_cmd} -l ${AUKS_PRIV_LIFETIME} \
+	      -kt ${AUKS_PRIV_KEYTAB} ${AUKS_PRIV_PRINC} 2>&1 >/dev/null)
+	  ERR_CODE=$?
+      else
+	  # If we're not targetting the root user, we must change out identity.
+	  # To do that, we must make sure that the keytab is still reachable.
+	  # If not readable, fallback to the old behavior : use /tmp/ ccaches
+	  if ! su -c "test -r ${AUKS_PRIV_KEYTAB}" ${AUKS_PRIV_USER}; then
+	      fallback_ccache="/tmp/krb5_$(id -u ${AUKS_PRIV_USER})"
+	      ${LOGGER} "The keytab (${AUKS_PRIV_KEYTAB}) is not readable by the ${AUKS_PRIV_USER} user. \
+                         Using ${fallback_ccache} as the credential cache"
 
+	      ERROR=$(${timeout_cmd} -s9 ${AUKS_PRIV_KINIT_TIMEOUT} ${kinit_cmd} -l ${AUKS_PRIV_LIFETIME} -c ${fallback_ccache} \
+		  -kt ${AUKS_PRIV_KEYTAB} ${AUKS_PRIV_PRINC} 2>&1 >/dev/null)
+	      ERR_CODE=$?
+	      chown ${AUKS_PRIV_USER}: ${fallback_ccache}
+	      chown 0600 ${fallback_ccache}
+	  else
+	      ERROR=$(su -c "${timeout_cmd} -s9 ${AUKS_PRIV_KINIT_TIMEOUT} ${kinit_cmd} -l ${AUKS_PRIV_LIFETIME} \
+	      -kt ${AUKS_PRIV_KEYTAB} ${AUKS_PRIV_PRINC}" ${AUKS_PRIV_USER} 2>&1 >/dev/null)
+	      ERR_CODE=$?
+	  fi
 
-      touch ${ccache} 2>/dev/null
-      if [ $? -ne 0 ]
-	  then
-	  ${LOGGER} "unable to touch ccache"
-	  exit 1
       fi
-      
-      chmod 0600 ${ccache} 2>/dev/null
-      if [ $? -ne 0 ]
-	  then
-	  ${LOGGER} "unable to set ccache mode to 0600"
-	  exit 1
-      fi
-      
-      chown ${AUKS_PRIV_USER} ${ccache} 2>/dev/null
-      if [ $? -ne 0 ]
-	  then
-	  ${LOGGER} "unable to set ccache user to ${AUKS_PRIV_USER}"
-	  exit 1
-      fi
-      
-      ERROR=$(${timeout_cmd} -s9 ${AUKS_PRIV_KINIT_TIMEOUT} ${kinit_cmd} -l ${AUKS_PRIV_LIFETIME} -c ${ccache} \
-	  -kt ${AUKS_PRIV_KEYTAB} ${AUKS_PRIV_PRINC} 2>&1 >/dev/null)
-      if [ $? -ne 0 ]
+      if [ $ERR_CODE -ne 0 ]
 	  then
 	  ${LOGGER} "unable to get ccache for ${AUKS_PRIV_PRINC} using \
 	      ktfile ${AUKS_PRIV_KEYTAB} : ${ERROR}"
