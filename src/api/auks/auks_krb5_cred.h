@@ -212,4 +212,35 @@ int auks_krb5_cred_renew_buffer(char *in_buf,size_t in_buf_len,
 int auks_krb5_cred_deladdr_buffer(char *in_buf,size_t in_buf_len,
 				  char** pout_buf,size_t *pout_buf_len);
 
+
+/*!
+ * \brief Generates a new unique ccache usique krb5_cc_new_unique
+ * \internal
+ *
+ * \param fullanme_out pointer on the newly created ccache.
+                       Caller's responsibility to free it.
+ *
+ * \retval AUKS_SUCCESS
+ * \retval AUKS_ERROR
+ * \retval AUKS_ERROR_KRB5_CRED_INIT_CTX
+ * \retval AUKS_ERROR_KRB5_CRED_OPEN_CC
+ *
+ */
+int auks_krb_cc_new_unique(char ** fullname_out);
+
+/*!
+ * \brief Destroys the given ccache
+ * \internal
+ *
+ * \param fullanme Name of the ccache to destroy
+ *
+ * \retval AUKS_SUCCESS
+ * \retval AUKS_ERROR
+ * \retval AUKS_ERROR_KRB5_CRED_INIT_CTX
+ * \retval AUKS_ERROR_KRB5_CRED_OPEN_CC
+ * \retval AUKS_ERROR_KRB5_CRED_READ_CC
+ *
+ */
+int auks_krb_cc_destroy(char * fullname);
+
 #endif

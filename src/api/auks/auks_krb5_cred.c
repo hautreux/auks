@@ -125,6 +125,125 @@ _krb_is_local_tgt(krb5_principal princ, krb5_data *realm)
 }
 
 int
+auks_krb_cc_new_unique(char ** fullname_out)
+{
+	int fstatus;
+
+	krb5_context context;
+	krb5_ccache ccache;
+
+	char *ccache_type = NULL, *ccache_name = NULL;
+
+	/* Initialize KRB5 context */
+	fstatus = krb5_init_context(&context);
+	if (fstatus) {
+		auks_error("Error while initializing KRB5");
+		fstatus = AUKS_ERROR_KRB5_CRED_INIT_CTX;
+		return fstatus;
+	}
+
+	/* Get the default ccache */
+	fstatus = krb5_cc_default(context, &ccache);
+	if (fstatus) {
+	        auks_error("Error while getting default ccache");
+		fstatus = AUKS_ERROR_KRB5_CRED_OPEN_CC ;
+		goto out;
+	}
+
+	/* Get the default ccache type */
+	ccache_type = krb5_cc_get_type(context, ccache);
+
+	/* Generate a new unique ccache */
+	fstatus = krb5_cc_new_unique(context, ccache_type, NULL, &ccache);
+	if (fstatus) {
+		auks_error("Error while generating new unique ccache of type %s", ccache_type);
+		fstatus = AUKS_ERROR_KRB5_CRED_OPEN_CC ;
+		goto out;
+	}
+
+
+	/* Get ccache full name */
+	fstatus = krb5_cc_get_full_name(context, ccache, &ccache_name);
+	if (fstatus) {
+		auks_error("Error while geting ccache full name");
+		fstatus = AUKS_ERROR_KRB5_CRED_OPEN_CC ;
+		goto out_cc;
+	}
+
+	/* Set output var */
+	size_t l = strlen(ccache_name) + 1;
+	*fullname_out = (char *) malloc(l * sizeof(char *));
+	strcpy(*fullname_out, ccache_name);
+
+	/* Call krb5_cc_switch for ccache that supports it */
+	if (krb5_cc_support_switch(context, ccache_type)) {
+		fstatus = krb5_cc_switch(context, ccache);
+		if (fstatus) {
+			auks_error("Error while calling krb5_cc_switch");
+			fstatus = AUKS_ERROR_KRB5_CRED_OPEN_CC ;
+			goto out_cc;
+		}
+	}
+
+ out_cc:
+	/* Close ccache handles */
+	krb5_cc_close(context, ccache);
+
+ out:
+	krb5_free_string(context, ccache_name);
+
+	/* Free KRB5 context */
+	krb5_free_context(context);
+	return (fstatus);
+}
+
+int
+auks_krb_cc_destroy(char * fullname)
+{
+        int fstatus;
+
+	krb5_context context;
+	krb5_ccache ccache = NULL;
+
+
+	/* Initialize KRB5 context */
+	fstatus = krb5_init_context(&context);
+	if (fstatus) {
+		auks_error("Error while initializing KRB5");
+		fstatus = AUKS_ERROR_KRB5_CRED_INIT_CTX;
+		return (fstatus);
+	}
+
+	/* Find and destroy ccache */
+	fstatus = krb5_cc_resolve(context, fullname, &ccache);
+	if (fstatus) {
+		auks_error("Error while opening credcache %s", fullname);
+		fstatus = AUKS_ERROR_KRB5_CRED_OPEN_CC ;
+		goto cc_exit;
+	}
+
+	fstatus = krb5_cc_destroy(context, ccache);
+	if (fstatus && fstatus != KRB5_FCC_NOFILE) {
+		auks_error("Error while destroying cache %s", fullname);
+		fstatus = AUKS_ERROR_KRB5_CRED_READ_CC;
+		goto out;
+	}
+
+        auks_log("Destroyed ccache %s", fullname);
+
+ out:
+	/* Free KRB5 context */
+	krb5_free_context(context);
+
+	return (fstatus);
+
+ cc_exit:
+	/* Close ccache handles */
+	krb5_cc_close(context, ccache);
+
+	goto out;
+}
+int
 auks_krb5_cred_get(char *ccachefilename,char **pbuffer,
 		   size_t * plength)
 {
