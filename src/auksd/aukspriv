@@ -38,6 +38,8 @@
 #                            default value is local3.notice
 #                            a "none" value means logs on stdout
 #
+#  AUKS_KINIT_OPTS         : additional options for the kinit command.
+#
 #----------------------------------------------------------------------------
 # Copyright  CEA/DAM/DIF (2009)
 #
@@ -115,9 +117,9 @@ function mylogger {
 
     if [[ ${AUKS_PRIV_SYSLOG_PRIO} == "none" ]]
 	then
-	echo "$(date) [INFO1] aukspriv: " $@
+	echo "$(date) [INFO1] aukspriv: " "$@"
     else
-	logger -i -p ${AUKS_PRIV_SYSLOG_PRIO} -t "aukspriv" $@
+	logger -i -p "${AUKS_PRIV_SYSLOG_PRIO}" -t "aukspriv" "$@"
     fi
 
 }
@@ -171,10 +173,16 @@ fi
 timeout_cmd=timeout
 kinit_cmd=kinit
 LOGGER=mylogger
+myname=$(basename "$0")
+aukspriv_cmd="${timeout_cmd} -s9 ${AUKS_PRIV_KINIT_TIMEOUT} ${kinit_cmd}\
+              -l ${AUKS_PRIV_LIFETIME}\
+              -kt ${AUKS_PRIV_KEYTAB}
+              ${AUKS_KINIT_OPTS}"
+
 #-------------------------------------------------------------------------------
 if [[ $1 == "-h" ]]
     then
-    echo -e "Usage: $(basename $0) [-h|-v]\n\n\
+    echo -e "Usage: ${myname} [-h|-v]\n\n\
 	\t-h\t\tprint this message\n\
 	\t-v\t\tlog on stdout instead of syslog\n"
     exit 0
@@ -186,10 +194,13 @@ else
     if [[ ${AUKS_PRIV_DONE} != "yes" ]]
 	then
 	export AUKS_PRIV_DONE=yes
+	# shellcheck disable=SC2068
 	$0 $@ >/dev/null 2>&1 &
 	exit 0
     fi
 fi
+
+
 if [[ -n ${AUKS_PRIV_USER} ]] && \
     [[ -n ${AUKS_PRIV_KEYTAB} ]] && \
     [[ -n ${AUKS_PRIV_PRINC} ]] && \
@@ -198,12 +209,11 @@ if [[ -n ${AUKS_PRIV_USER} ]] && \
     [[ -n ${AUKS_PRIV_KINIT_TIMEOUT} ]]
     then
 
-    while [ 1 -eq 1 ]
+    while true
       do
       if [[ ${AUKS_PRIV_USER} == "root" ]]; then
 	  # If we're targeting the root user, that's easy stuff.
-	  ERROR=$(${timeout_cmd} -s9 ${AUKS_PRIV_KINIT_TIMEOUT} ${kinit_cmd} -l ${AUKS_PRIV_LIFETIME} \
-	      -kt ${AUKS_PRIV_KEYTAB} ${AUKS_PRIV_PRINC} 2>&1 >/dev/null)
+	  ERROR=$(${aukspriv_cmd} "${AUKS_PRIV_PRINC}" 2>&1 >/dev/null)
 	  ERR_CODE=$?
       else
 	  # If we're not targetting the root user, we must change out identity.
@@ -214,14 +224,12 @@ if [[ -n ${AUKS_PRIV_USER} ]] && \
 	      ${LOGGER} "The keytab (${AUKS_PRIV_KEYTAB}) is not readable by the ${AUKS_PRIV_USER} user. \
                          Using ${fallback_ccache} as the credential cache"
 
-	      ERROR=$(${timeout_cmd} -s9 ${AUKS_PRIV_KINIT_TIMEOUT} ${kinit_cmd} -l ${AUKS_PRIV_LIFETIME} -c ${fallback_ccache} \
-		  -kt ${AUKS_PRIV_KEYTAB} ${AUKS_PRIV_PRINC} 2>&1 >/dev/null)
+	      ERROR=$(${aukspriv_cmd} -c "${fallback_ccache}" "${AUKS_PRIV_PRINC}" 2>&1 >/dev/null)
 	      ERR_CODE=$?
-	      chown ${AUKS_PRIV_USER}: ${fallback_ccache}
-	      chown 0600 ${fallback_ccache}
+	      chown "${AUKS_PRIV_USER}": "${fallback_ccache}"
+	      chown 0600 "${fallback_ccache}"
 	  else
-	      ERROR=$(su -c "${timeout_cmd} -s9 ${AUKS_PRIV_KINIT_TIMEOUT} ${kinit_cmd} -l ${AUKS_PRIV_LIFETIME} \
-	      -kt ${AUKS_PRIV_KEYTAB} ${AUKS_PRIV_PRINC}" ${AUKS_PRIV_USER} 2>&1 >/dev/null)
+	      ERROR=$(su -c "${aukspriv_cmd}" "${AUKS_PRIV_USER}" 2>&1 >/dev/null)
 	      ERR_CODE=$?
 	  fi
 
