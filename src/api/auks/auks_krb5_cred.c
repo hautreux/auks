@@ -100,6 +100,30 @@
 #include "auks/auks_krb5_cred.h"
 #include "auks/auks_log.h"
 
+/* Some data comparison and conversion functions.  */
+static inline int
+_krb_data_eq(krb5_data d1, krb5_data d2)
+{
+	return (d1.length == d2.length && (d1.length == 0 ||
+					   !memcmp(d1.data, d2.data, d1.length)));
+}
+
+static inline int
+_krb_data_eq_string (krb5_data d, const char *s)
+{
+	return (d.length == strlen(s) && (d.length == 0 ||
+					  !memcmp(d.data, s, d.length)));
+}
+
+/* Return true if princ is the local krbtgt principal for local_realm. */
+static krb5_boolean
+_krb_is_local_tgt(krb5_principal princ, krb5_data *realm)
+{
+	return princ->length == 2 && _krb_data_eq(princ->realm, *realm) &&
+		_krb_data_eq_string(princ->data[0], KRB5_TGS_NAME) &&
+		_krb_data_eq(princ->data[1], *realm);
+}
+
 int
 auks_krb5_cred_get(char *ccachefilename,char **pbuffer,
 		   size_t * plength)
@@ -115,6 +139,7 @@ auks_krb5_cred_get(char *ccachefilename,char **pbuffer,
 	krb5_cc_cursor cc_cursor;
 	krb5_data *p_outbuf;
 	krb5_replay_data krdata;
+	krb5_principal princ;
 
 	int read_cred_was_used = 0;
 	int read_cred_is_tgt = 0;
@@ -155,6 +180,13 @@ auks_krb5_cred_get(char *ccachefilename,char **pbuffer,
 	}
 	auks_log("credential cache sequential read successfully started");
 
+
+	/* Get principal name */
+	if (krb5_cc_get_principal(context, ccache, &princ) != 0) {
+		auks_error("Unable to retrieve principal name");
+		goto ctx_exit;
+	}
+
 	/* look for the first TGT of the cache */
 	do {
 		err_code = krb5_cc_next_cred(context,ccache,
@@ -162,9 +194,7 @@ auks_krb5_cred_get(char *ccachefilename,char **pbuffer,
 		if (!err_code) {
 			/* mark read_cred variable as used */
 			read_cred_was_used = 1;
-			/* just check initial or forwarded tickets (TGTs) */
-			if ((read_cred.ticket_flags & TKT_FLG_INITIAL)
-			    || (read_cred.ticket_flags & TKT_FLG_FORWARDED)) {
+			if (_krb_is_local_tgt(read_cred.server, &princ->realm)) {
 				read_cred_is_tgt = 1 ;
 				break;
 			}
@@ -554,6 +584,7 @@ auks_krb5_cred_renew(char *ccachefilename)
 	krb5_creds read_cred;
 	krb5_creds renew_cred;
 	krb5_cc_cursor cc_cursor;
+	krb5_principal princ;
 
 	/* initialize kerberos context */
 	err_code = krb5_init_context(&context);
@@ -578,6 +609,12 @@ auks_krb5_cred_renew(char *ccachefilename)
 	}
 	auks_log("credential cache successfully resolved");
 
+	/* Get principal name */
+	if (krb5_cc_get_principal(context, ccache, &princ) != 0) {
+		auks_error("Unable to retrieve principal name");
+		goto ctx_exit;
+	}
+
 	/* start credential cache sequential reading */
 	err_code = krb5_cc_start_seq_get(context, ccache,&cc_cursor);
 	if (err_code) {
@@ -593,9 +630,7 @@ auks_krb5_cred_renew(char *ccachefilename)
 		err_code = krb5_cc_next_cred(context,ccache,
 					     &cc_cursor,&read_cred);
 		if (!err_code) {
-			/* just check initial or forwarded tickets (TGTs) */
-			if ((read_cred.ticket_flags & TKT_FLG_INITIAL)
-			    || (read_cred.ticket_flags & TKT_FLG_FORWARDED)) {
+			if (_krb_is_local_tgt(read_cred.server, &princ->realm)) {
 				read_cred_is_tgt = 1;
 				if (read_cred.ticket_flags
 				    & TKT_FLG_RENEWABLE) {
