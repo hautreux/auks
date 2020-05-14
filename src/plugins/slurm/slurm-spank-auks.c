@@ -93,6 +93,7 @@
 
 #include "auks/auks_error.h"
 #include "auks/auks_api.h"
+#include "auks/auks_krb5_cred.h"
 
 #define AUKS_HEADER "spank-auks: "
 
@@ -114,8 +115,7 @@
  */
 SPANK_PLUGIN(auks, 1);
 
-#define CREDCACHE_MAXLENGTH 128
-static char auks_credcache[CREDCACHE_MAXLENGTH];
+static char *auks_credcache = NULL;
 
 static char* auks_conf_file = NULL;
 static char* auks_sync_mode = NULL;
@@ -427,6 +427,8 @@ spank_auks_remote_init (spank_t sp, int ac, char *av[])
 
 	int mode;
 
+	auks_cred_t cred;
+
 	/* get required auks mode */
 	mode = _spank_auks_get_current_mode(sp,ac,av);
 	switch(mode) {
@@ -445,8 +447,8 @@ spank_auks_remote_init (spank_t sp, int ac, char *av[])
 		break;
 	}
 
-	/* set default auks cred cache length to 0 */
-	auks_credcache[0]='\0';
+	/* Reset auks credcache */
+	auks_credcache = NULL;
 
 	/* get slurm jobid */
 	if (spank_get_item (sp, S_JOB_ID, &jobid) != ESPANK_SUCCESS) {
@@ -464,27 +466,6 @@ spank_auks_remote_init (spank_t sp, int ac, char *av[])
 		return (-1);
 	}
 
-	/* build credential cache name */
-	fstatus = snprintf(auks_credcache,CREDCACHE_MAXLENGTH,
-			   "/tmp/krb5cc_%u_%u_XXXXXX",
-			   uid,jobid);
-	if ( fstatus >= CREDCACHE_MAXLENGTH ||
-	     fstatus < 0 ) {
-		xerror("unable to build auks credcache name");
-		goto exit;
-	}
-
-	/* build unique credential cache */
-	omask = umask(S_IRUSR | S_IWUSR);
-	fstatus = mkstemp(auks_credcache);
-	umask(omask);
-	if ( fstatus == -1 ) {
-		xerror("unable to create a unique auks credcache");
-		goto exit;
-	}
-	else
-		close(fstatus);
-
 	/* force KRB5CCNAME's value if the user wants so */
 	if (auks_hostcredcache_file != NULL) {
 		char *p = getenv("KRB5CCNAME");
@@ -501,53 +482,76 @@ spank_auks_remote_init (spank_t sp, int ac, char *av[])
 		goto exit;
 	}
 
-	/* get user credential */
-	fstatus = auks_api_get_cred(&engine,uid,auks_credcache);
+	/* Get auks cred */
+	fstatus = auks_api_get_auks_cred(&engine,uid,&cred);
+	if( fstatus ) {
+		xerror("unable to unpack auks cred from reply : %s",
+		       auks_strerror(fstatus));
+		fstatus = AUKS_ERROR_API_CORRUPTED_REPLY ;
+		goto unload;
+	}
+
+	/* change to user uid and gid before getting cred */
+	if ( setegid(gid) ) {
+		xerror("unable to switch to user gid : %s",
+		       strerror(errno));
+		goto out_cred;
+	}
+
+	if ( seteuid(uid) ) {
+		xerror("unable to switch to user uid : %s",
+		       strerror(errno));
+		goto out_cred;
+	}
+
+	fstatus = auks_krb_cc_new_unique(&auks_credcache);
+	if (fstatus) {
+	        xerror("Error while initializing a new unique");
+		goto out_err;
+	}
+
+	xinfo("Initialized ccache %s", auks_credcache);
+
+        /* Store user credential */
+	fstatus = auks_cred_store(&cred, auks_credcache);
 	if ( fstatus != AUKS_SUCCESS ) {
-		xerror("unable to get user %u cred : %s",uid,
-		      auks_strerror(fstatus));
-		unlink(auks_credcache);
-		auks_credcache[0]='\0';
-		goto unload;
-	}
-	xinfo("user '%u' cred stored in %s",uid,auks_credcache);
-
-	/* change file owner */
-	fstatus = chown(auks_credcache,uid,gid);
-	if ( fstatus != 0 ) {
-		xerror("unable to change cred %s owner : %s",
-		      auks_credcache,strerror(errno));
-		goto unload;
+		xerror("unable to store cred : %s",
+		       auks_strerror(fstatus));
+		fstatus = AUKS_ERROR_API_REPLY_PROCESSING ;
+		goto out_err;
 	}
 
-	/* set cred cache name in user env */
-	fstatus = spank_setenv(sp,"KRB5CCNAME",auks_credcache,1);
-	if ( fstatus != 0 ) {
-		xerror("unable to set KRB5CCNAME env var");
-	}
+	xinfo("user '%u' cred stored in ccache %s",uid, auks_credcache);
 
-	/* remove forced KRB5CCNAME's value if necessary */
-	if (auks_hostcredcache_file != NULL) {
-		if ( prev_krb5ccname != NULL ) {
-			setenv("KRB5CCNAME",prev_krb5ccname,1);
-			free(prev_krb5ccname);
-		} else {
-			unsetenv("KRB5CCNAME");
-		}
-	}
-
-	/* if required by the configuration, also put the cred cache name */
-	/* in the spank plugstack environment */
 	if ( auks_spankstack ) {
 		setenv("KRB5CCNAME",auks_credcache,1);
 	}
 
-unload:
+	/* Set KRBCCNAME in user env */
+	fstatus = spank_setenv(sp,"KRB5CCNAME",auks_credcache,1);
+	if ( fstatus != 0 )
+		xerror("unable to set KRB5CCNAME env var");
+
+ out_cred:
+	/* Free auks cred */
+	auks_cred_free_contents(&cred);
+
+ unload:
+	/* reset privileged uid/gid */
+	seteuid(getuid());
+	setegid(getgid());
+
 	/* unload auks conf */
 	auks_api_close(&engine);
 
 exit:
 	return (fstatus);
+
+out_err:
+	if (auks_credcache != NULL)
+	  free(auks_credcache);
+
+	goto out_cred;
 }
 
 /* remove cred at end of step */
@@ -567,37 +571,42 @@ spank_auks_remote_exit (spank_t sp, int ac, char **av)
 	if ( auks_hostcredcache_file != NULL )
 		free(auks_hostcredcache_file);
 
-	/* now only process in remote mode */
-	if (!spank_remote (sp))
-		return (0);
-
 	/* only process if a cred file was defined in a previous call */
-	if ( strnlen(auks_credcache,CREDCACHE_MAXLENGTH) == 0 )
+	if ( auks_credcache == NULL )
 		return 0;
 
-	/* get slurm job user uid & gid */
+	/* now only process in remote mode */
+	if (!spank_remote (sp)) {
+	        fstatus = 0;
+		goto out;
+	}
+
+        /* get slurm job user uid & gid */
 	if (spank_get_item (sp, S_JOB_UID, &uid) != ESPANK_SUCCESS) {
 		xerror("failed to get uid: %s", strerror(errno));
-		return (-1);
+		fstatus = -1;
+		goto out;
 	}
 	if (spank_get_item (sp, S_JOB_GID, &gid) != ESPANK_SUCCESS) {
 		xerror("failed to get gid: %s", strerror(errno));
-		return (-1);
+		fstatus = -1;
+		goto out;;
 	}
 
 	/* change to user gid before removing cred */
 	if ( setegid(gid) ) {
 		xerror("unable to switch to user gid : %s",
 		      strerror(errno));
-		return (-1);
+		fstatus = -1;
+		goto out;
 	}
 
 	/* change to user uid and gid before removing cred */
 	if ( seteuid(uid) ) {
 		xerror("unable to switch to user uid : %s",
 		      strerror(errno));
-		setegid(getgid());
-		return (-1);
+		fstatus = -1;
+		goto out;
 	}
 
 	/* sync all/some file systems to ensure dirty pages flush
@@ -605,14 +614,18 @@ spank_auks_remote_exit (spank_t sp, int ac, char **av)
 	   (see _sync_fs method for more details) */
 	_sync_fs();
 
-	/* remove credential cache */
-	fstatus = unlink(auks_credcache);
-	if ( fstatus != 0 ) {
-		xerror("unable to remove user '%u' cred cache %s : %s",
-		      uid,auks_credcache,strerror(errno));
+	/* Destroy all krb5 ccache */
+	fstatus = auks_krb_cc_destroy(auks_credcache);
+	if (fstatus) {
+	      xerror("Unable to destroy ccache %s",auks_credcache);
+	      goto out;
 	}
-	else
-		xinfo("user '%u' cred cache %s removed",uid,auks_credcache);
+
+        xinfo("Destroyed ccache %s", auks_credcache);
+
+out:
+	free(auks_credcache);
+	auks_credcache = NULL;
 
 	/* replace privileged uid/gid */
 	seteuid(getuid());
@@ -622,7 +635,7 @@ spank_auks_remote_exit (spank_t sp, int ac, char **av)
 	if ( auks_sync_mode != NULL )
 		free(auks_sync_mode);
 
-	return 0;
+	return fstatus;
 }
 
 
