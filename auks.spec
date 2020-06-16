@@ -8,7 +8,7 @@
 
 Summary: Aside Utility for Kerberos Support
 Name: auks
-Version: 0.4.4
+Version: 0.5.0
 Release: 1%{?dist}
 License: CeCILL-C License
 Group: System Environment/Base
@@ -39,6 +39,11 @@ BuildRequires:  systemd-units
 Requires:       chkconfig
 # Required for %%preun and %%postun
 Requires:       initscripts
+%endif
+
+%if 0%{?fedora} >= 28 || 0%{?rhel} >= 8
+BuildRequires: libtirpc-devel
+Requires: libtirpc
 %endif
 
 #  set default _auks_sysconfdir to /etc/auks
@@ -79,7 +84,7 @@ Plugins that provides Kerberos Credential Support to Slurm
 
 %build
 autoreconf -fvi
-%configure CFLAGS=-DSYSCONFDIR=\\\"%{_auks_sysconfdir}\\\" %{?with_slurm:--with-slurm}
+%configure CFLAGS="${CFLAGS} -DSYSCONFDIR=\\\"%{_auks_sysconfdir}\\\"" %{?with_slurm:--with-slurm}
 make %{?_smp_mflags}
 
 %install
@@ -130,6 +135,7 @@ install -D -m644 src/plugins/slurm/slurm-spank-auks.conf ${RPM_BUILD_ROOT}/etc/s
 %{_initrddir}/aukspriv
 %endif
 %config(noreplace) /etc/logrotate.d/auks
+%{_localstatedir}/cache/auks
 %{_mandir}/man1/auks.1.gz
 %{_mandir}/man5/auks.acl.5.gz
 %{_mandir}/man5/auks.conf.5.gz
@@ -150,6 +156,9 @@ install -D -m644 src/plugins/slurm/slurm-spank-auks.conf ${RPM_BUILD_ROOT}/etc/s
 %endif
 
 %changelog
+* Tue Jun 16 2020 Matthieu Hautreux <matthieu.hautreux@cea.fr> - 0.5.0-1
+- Add libtirpc(-devel) requirements for RHEL>8 and Fedora > 28
+- Add /var/cache/auks directory creation
 * Wed Nov 18 2015 Matthieu Hautreux <matthieu.hautreux@cea.fr> - 0.4.4-1
 - Correct a regression resulting in badly located initscripts
 * Mon Oct 19 2015 Matthieu Hautreux <matthieu.hautreux@cea.fr> - 0.4.3-3
