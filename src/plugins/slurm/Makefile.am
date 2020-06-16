@@ -1,7 +1,7 @@
+EXTRA_DIST		=	slurm-spank-auks.conf auks.so.8
 
 if HAVE_SLURM
 
-EXTRA_DIST		=	slurm-spank-auks.conf
 man8_MANS		=	auks.so.8
 
 LIBAUKSAPI		=	../../api/auks/libauksapi.la
