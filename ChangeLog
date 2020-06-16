@@ -1,3 +1,24 @@
+06/16/2020 Matthieu Hautreux <matthieu.hautreux@cea.fr>
+
+	* auks-0.5.0
+	* auks.spec: add libtirpc requirements starting from Rhel8/Fedora28
+	* auks-api: use libtirpc when detected at configure
+	(based on a patch from Regine Gaudin, CEA)
+	* auks/krb5|aukspriv|spank-auks: add compat with all krb5 ccache types
+	(patch from Romain Fihue, CEA)
+	* auks/krb5: fix TGT filtering method to handle non file-based ccache
+	(patch from Romain Fihue, CEA)
+	* spank-auks: move local ctx init to slurm_spank_init_post_opt
+	* spank-auks: fix #24 slurmstepd not killing auks process
+	(patch from Raouf Bencheraiet)
+	* auks-api: enlarge AUKS_CRED_DATA_MAX_LENGTH to 4096 to ensure that
+	TGT larger than 2ko are properly handled.
+	/!\ breaks compatibility with previous versions of auks, all slurm
+	components must be upgraded at the same time on all nodes.
+	(patch from Robbert Eggermont, TU Delft)
+	* auks: make options parsing work with unsigned char
+	(patch from Raouf Bencheraiet)
+
 04/06/2016 Matthieu Hautreux <matthieu.hautreux@cea.fr>
 
 	* auksd/systemd: set max open fds limit to 32k
