@@ -180,7 +180,10 @@ slurm_spank_init (spank_t sp, int ac, char *av[])
 int
 slurm_spank_init_post_opt (spank_t sp, int ac, char *av[])
 {
-	if ( spank_context() == S_CTX_ALLOCATOR )
+    spank_context_t ctxt;
+
+    ctxt = spank_context();
+	if ( ctxt == S_CTX_ALLOCATOR || ctxt == S_CTX_LOCAL )
 		return spank_auks_local_user_init(sp,ac,av);
 	else
 		return 0;
@@ -189,7 +192,7 @@ slurm_spank_init_post_opt (spank_t sp, int ac, char *av[])
 int
 slurm_spank_local_user_init (spank_t sp, int ac, char **av)
 {
-	return spank_auks_local_user_init(sp,ac,av);
+	return 0;
 }
 
 int
