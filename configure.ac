@@ -32,6 +32,14 @@ AC_PROG_YACC
 dnl Look after SLURM resource manager
 AX_SLURM
 
+dnl Look for tirpc
+AC_ARG_ENABLE(tirpc,
+	[AC_HELP_STRING([--enable-tirpc],
+			[enable use of TI-RPC @<:@default=yes@:>@])],
+	enable_tirpc=$enableval,
+	enable_tirpc='')
+AC_LIBTIRPC
+
 dnl Files to build during configure
 AC_CONFIG_FILES([Makefile
 		src/Makefile

@@ -19,7 +19,8 @@ libauksapi_la_SOURCES	=	auks_krb5_stream.c auks_krb5_cred.c \
 				auks_error.c auks_api.c
 
 libauksapi_la_CPPFLAGS	= 	-I../ -pthread \
-				-DLOCALSTATEDIR=\"$(localstatedir)\"
+				-DLOCALSTATEDIR=\"$(localstatedir)\" \
+				$(AM_CPPFLAGS)
 
 libauksapi_la_LDFLAGS	= 	$(LIB_LDFLAGS) \
 				-version-info 0:1:0 \
