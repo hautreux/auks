@@ -23,6 +23,7 @@ AM_PROG_AR
 
 dnl This is a C project
 AC_PROG_CC
+AM_PROG_CC_C_O
 
 dnl This project uses lex an yacc internaly
 AC_PROG_LEX
