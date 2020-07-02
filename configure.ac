@@ -1,5 +1,5 @@
 dnl Package initialisation
-AC_INIT([auks],[0.5.0],[matthieu.hautreux@cea.fr])
+AC_INIT([auks],[0.5.1],[matthieu.hautreux@cea.fr])
 
 dnl Auxiliary scripts directory
 AC_CONFIG_AUX_DIR([build-aux])
@@ -23,6 +23,7 @@ AM_PROG_AR
 
 dnl This is a C project
 AC_PROG_CC
+AM_PROG_CC_C_O
 
 dnl This project uses lex an yacc internaly
 AC_PROG_LEX
