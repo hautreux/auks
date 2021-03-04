@@ -8,7 +8,7 @@
 
 Summary: Aside Utility for Kerberos Support
 Name: auks
-Version: 0.5.0
+Version: 0.5.1
 Release: 1%{?dist}
 License: CeCILL-C License
 Group: System Environment/Base
@@ -20,8 +20,8 @@ Source0: %{name}-%{version}.tar.gz
 # -DLIBKRB5_MEMORY_LEAK_WORKAROUND in the configure
 # to activate a workaround in auks that corrects a memory
 # leak in replay cache management
-Requires: krb5-libs >= 1.8
-BuildRequires: krb5-devel >= 1.8
+Requires: krb5-libs >= 1.18
+BuildRequires: krb5-devel >= 1.18
 BuildRequires: autoconf
 BuildRequires: automake
 BuildRequires: libtool
