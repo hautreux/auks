@@ -103,10 +103,11 @@ extern int errno;
 #include "auks/auks_log.h"
 
 
-extern krb5_error_code krb5_rc_resolve_full(krb5_context context, krb5_rcache *id,
-				     char *string_name);
+extern krb5_error_code k5_rc_resolve(krb5_context context, const char *name,
+		                     krb5_rcache *rc_out);
 extern krb5_error_code krb5_rc_initialize(krb5_context, krb5_rcache, krb5_deltat);
-extern krb5_error_code krb5_rc_close(krb5_context, krb5_rcache);
+extern krb5_error_code k5_rc_close(krb5_context context, krb5_rcache rc);
+
 
 /* private functions definitions */
 #define LOCAL_PRINCIPAL 1
@@ -874,8 +875,8 @@ auks_krb5_stream_init_base(auks_krb5_stream_t * kstream, int stream,int flags)
 	/* disable replay cache if asked to (better scalability without it) */
 	if ( kstream->flags & AUKS_KRB5_STREAM_NO_RCACHE ) {
 		krb5_rcache rcache;
-		kstatus = krb5_rc_resolve_full(kstream->context,&rcache,
-					       "none:");
+		kstatus = k5_rc_resolve(kstream->context, "none:",
+					&rcache);
 		if (kstatus) {
 			auks_error("rcache resolve failed : %s",
 				   error_message(kstatus));
@@ -886,7 +887,7 @@ auks_krb5_stream_init_base(auks_krb5_stream_t * kstream, int stream,int flags)
 		if (kstatus) {
 			auks_error("rcache initialisation failed : %s",
 				   error_message(kstatus));
-			krb5_rc_close(kstream->context,rcache);
+			k5_rc_close(kstream->context,rcache);
 #ifdef LIBKRB5_MEMORY_LEAK_WORKAROUND
 			/* memory leak in libkrb5 ? */
 			/* valgrind says that it was not freed correctly */
@@ -902,7 +903,7 @@ auks_krb5_stream_init_base(auks_krb5_stream_t * kstream, int stream,int flags)
 		if (kstatus) {
 			auks_error("unable to set rcache : %s",
 				   error_message(kstatus));
-			krb5_rc_close(kstream->context,rcache);
+			k5_rc_close(kstream->context,rcache);
 #ifdef LIBKRB5_MEMORY_LEAK_WORKAROUND
 			/* memory leak in libkrb5 ? */
 			/* valgrind says that it was not freed correctly */
