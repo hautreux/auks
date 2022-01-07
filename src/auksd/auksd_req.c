@@ -173,9 +173,6 @@ int auksd_process_req(void* p_args,int socket)
 	if ( engine->nat_traversal == 1 ) {
 		kflags |= AUKS_KRB5_STREAM_NAT_TRAVERSAL ;
 	}
-	if ( engine->replay_cache == 0 ) {
-		kflags |= AUKS_KRB5_STREAM_NO_RCACHE ;
-	}
 
 	/* initialize kerberos stream using incoming socket */
 	fstatus = auks_krb5_stream_srv_init(&kstream,socket,server_principal,

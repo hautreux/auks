@@ -85,7 +85,6 @@
 #define AUKS_KRB5_SERVER_STREAM         2
 
 #define AUKS_KRB5_STREAM_NAT_TRAVERSAL 0x0001
-#define AUKS_KRB5_STREAM_NO_RCACHE     0x0002
 
 typedef struct auks_krb5_stream {
 	int type;  /* AUKS_KRB5_CLIENT_STREAM  |  AUKS_KRB5_SERVER_STREAM */

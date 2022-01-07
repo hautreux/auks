@@ -179,11 +179,11 @@ specifies the delay in seconds between two clean stages. During a clean
 stage, expired credentials are removed from repository.
 The default is \fB300\fR.
 .TP
-\fBReplayCache\fR
+\fBReplayCache (deprecated)\fR
 if set to \fBno\fR, the kerberos security layer of the daemon will not detect
 replay attacks. This is a security issue but disabling this feature strongly 
 improve scalability. Do it only if your network can be considered as secured
-related to replay attacks. The default is \fByes\fR.
+related to replay attacks. Deprecated option, the value is always \fByes\fR.
 .TP
 \fBLogFile\fR
 specifies the file in which to log AUKS daemon details. 
@@ -353,10 +353,6 @@ auksd {
  RepoSize           = 500 ;
 .br
  Workers            = 10 ;
-.br
-
-.br
- ReplayCache        = yes ;
 .br
 
 .br
