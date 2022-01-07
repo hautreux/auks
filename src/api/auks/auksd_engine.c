@@ -307,7 +307,7 @@ auksd_engine_init(auksd_engine_t * engine,
 	auks_log2("engine %s is %s", "NAT traversal mode",
 		  (engine->nat_traversal==0)?"disabled":"enabled");
 	auks_log2("engine %s is %s", "kerberos replay cache",
-		  (engine->replay_cache==0)?"disabled":"enabled");
+		  (engine->replay_cache==0)?"disabled":"deprecated+ignored");
 	
 	fstatus = gethostname(myhostname,MAXHOSTNAMELEN);
 	if ( fstatus != 0 ) {

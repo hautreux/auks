@@ -103,11 +103,6 @@ extern int errno;
 #include "auks/auks_log.h"
 
 
-extern krb5_error_code krb5_rc_resolve_full(krb5_context context, krb5_rcache *id,
-				     char *string_name);
-extern krb5_error_code krb5_rc_initialize(krb5_context, krb5_rcache, krb5_deltat);
-extern krb5_error_code krb5_rc_close(krb5_context, krb5_rcache);
-
 /* private functions definitions */
 #define LOCAL_PRINCIPAL 1
 #define REMOTE_PRINCIPAL 2
@@ -136,8 +131,6 @@ int auks_krb5_stream_free_contents(auks_krb5_stream_t * kstream)
 
 	krb5_error_code kstatus;
 
-	krb5_rcache rcache;
-
 	if (kstream->local_principal_flag)
 		krb5_free_principal(kstream->context,
 				    kstream->local_principal);
@@ -153,19 +146,8 @@ int auks_krb5_stream_free_contents(auks_krb5_stream_t * kstream)
 		krb5_kt_close(kstream->context, kstream->keytab);
 
 	if (kstream->auth_context_flag == 1) {
-		kstatus = krb5_auth_con_getrcache(kstream->context,
-						  kstream->auth_context,
-						  &rcache);
 		krb5_auth_con_free(kstream->context,
 				   kstream->auth_context);
-#ifdef LIBKRB5_MEMORY_LEAK_WORKAROUND
-		if ( kstatus == 0 && 
-		     kstream->flags & AUKS_KRB5_STREAM_NO_RCACHE ) {
-			/* memory leak in libkrb5 ? */
-			/* valgrind says that it was not freed correctly */
-			free((char*)rcache);
-		}
-#endif
 	}
 
 	if (kstream->context_flag == 1)
@@ -870,48 +852,6 @@ auks_krb5_stream_init_base(auks_krb5_stream_t * kstream, int stream,int flags)
 	}
 	kstream->auth_context_flag = 1;
 	auks_log("connection authentication context initialisation succeed");
-
-	/* disable replay cache if asked to (better scalability without it) */
-	if ( kstream->flags & AUKS_KRB5_STREAM_NO_RCACHE ) {
-		krb5_rcache rcache;
-		kstatus = krb5_rc_resolve_full(kstream->context,&rcache,
-					       "none:");
-		if (kstatus) {
-			auks_error("rcache resolve failed : %s",
-				   error_message(kstatus));
-			fstatus = AUKS_ERROR_KRB5_STREAM_CTX_SETRCACHE ;
-			goto auth_ctx_exit;
-		}
-		kstatus = krb5_rc_initialize(kstream->context,rcache,0);
-		if (kstatus) {
-			auks_error("rcache initialisation failed : %s",
-				   error_message(kstatus));
-			krb5_rc_close(kstream->context,rcache);
-#ifdef LIBKRB5_MEMORY_LEAK_WORKAROUND
-			/* memory leak in libkrb5 ? */
-			/* valgrind says that it was not freed correctly */
-			free((char*)rcache);
-#endif
-			fstatus = AUKS_ERROR_KRB5_STREAM_CTX_SETRCACHE ;
-			goto auth_ctx_exit;
-		}
-		
-		kstatus = krb5_auth_con_setrcache(kstream->context,
-						  kstream->auth_context,
-						  rcache);
-		if (kstatus) {
-			auks_error("unable to set rcache : %s",
-				   error_message(kstatus));
-			krb5_rc_close(kstream->context,rcache);
-#ifdef LIBKRB5_MEMORY_LEAK_WORKAROUND
-			/* memory leak in libkrb5 ? */
-			/* valgrind says that it was not freed correctly */
-			free((char*)rcache);
-#endif
-			fstatus = AUKS_ERROR_KRB5_STREAM_CTX_SETRCACHE ;
-			goto auth_ctx_exit;
-		}
-	}
 
 	/* kerberos : set auth context endpoints */
 	klocal_addr.addrtype = local_addr.sin_family;
