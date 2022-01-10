@@ -544,14 +544,18 @@ int auks_cred_unpack(auks_cred_t* cred,auks_message_t * msg)
 
 	/* pack cred data */
 	fstatus = auks_message_unpack_int(msg,&i);
-	if ( fstatus != AUKS_SUCCESS ||
-		i != AUKS_CRED_DATA_MAX_LENGTH )
+	if ( fstatus != AUKS_SUCCESS)
 		return fstatus;
+	if (i > AUKS_CRED_DATA_MAX_LENGTH )
+		return AUKS_ERROR;
+
 	cred->max_length=(size_t)i;
 	fstatus = auks_message_unpack_int(msg,(int*)&(cred->length));
-	if ( fstatus != AUKS_SUCCESS ||
-	     cred->length > AUKS_CRED_DATA_MAX_LENGTH )
+	if ( fstatus != AUKS_SUCCESS)
 		return fstatus;
+
+	if (cred->length > AUKS_CRED_DATA_MAX_LENGTH)
+		return AUKS_ERROR;
 	fstatus = auks_message_unpack_data(msg,cred->data,cred->max_length);
 	if ( fstatus != AUKS_SUCCESS )
 		return fstatus;
