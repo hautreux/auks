@@ -420,8 +420,6 @@ spank_auks_remote_init (spank_t sp, int ac, char *av[])
 	int fstatus;
 	auks_engine_t engine;
 
-	char *prev_krb5ccname = NULL;
-
 	static uint32_t jobid;
 	uid_t uid;
 	gid_t gid;
@@ -469,15 +467,6 @@ spank_auks_remote_init (spank_t sp, int ac, char *av[])
 		return (-1);
 	}
 
-	/* force KRB5CCNAME's value if the user wants so */
-	if (auks_hostcredcache_file != NULL) {
-		char *p = getenv("KRB5CCNAME");
-		if ( p != NULL ) {
-			prev_krb5ccname = strdup(p);
-		}
-		setenv("KRB5CCNAME", auks_hostcredcache_file, 1);
-	}
-
 	/* initialize auks API */
 	fstatus = auks_api_init(&engine,auks_conf_file);
 	if ( fstatus != AUKS_SUCCESS ) {
@@ -485,7 +474,11 @@ spank_auks_remote_init (spank_t sp, int ac, char *av[])
 		goto exit;
 	}
 
-	/* Get auks cred */
+	/* force hostcredcache if the spank option ask so */
+	if (auks_hostcredcache_file != NULL)
+		auks_api_set_ccache(&engine, auks_hostcredcache_file);
+
+	/* get auks cred */
 	fstatus = auks_api_get_auks_cred(&engine,uid,&cred);
 	if( fstatus ) {
 		xerror("unable to unpack auks cred from reply : %s",
