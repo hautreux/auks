@@ -109,6 +109,15 @@ To sum up :
 might be available
 .br
 - if set and this plugin is required : abort submission
+.LP
+.TP
+\fBforce_file_ccache\fR
+when set, force the retrieved credential to be stored in a file credential cache
+of the form '/tmp/krb5cc_%uid%_%jobid%_XXXXXX'. This is the legacy storage behavior
+of auks prior to version 0.5.0.
+When no set, use the new default storage logic using the ccache type defined in krb5.conf
+(mandatory when use keyring or KCM caches, especially useful with polyinstanciated
+temporary directories).
 
 .SH "COPYING"
 .LP
