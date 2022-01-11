@@ -136,6 +136,9 @@ static int auks_enforced = 0;
 /* force original file ccache logic when set */
 static int auks_force_file_ccache = 0;
 
+/* ask for krb5_cc_switch by default */
+static int auks_cc_switch = 1;
+
 static uid_t auks_minimum_uid = 0;
 
 volatile pid_t renewer_pid;
@@ -512,7 +515,7 @@ spank_auks_remote_init (spank_t sp, int ac, char *av[])
 	 * to initialize a new unique ccache using the default ccache type
 	 * of the libkrb5/conf, otherwise revert to original file cache logic */
 	if (!auks_force_file_ccache) {
-		fstatus = auks_krb_cc_new_unique(&auks_credcache);
+		fstatus = auks_krb5_cc_new_unique(&auks_credcache, auks_cc_switch);
 		if (fstatus) {
 			xerror("error while initializing a new unique");
 			goto out_err;
@@ -650,7 +653,7 @@ spank_auks_remote_exit (spank_t sp, int ac, char **av)
 	_sync_fs();
 
 	/* Destroy all krb5 ccache */
-	fstatus = auks_krb_cc_destroy(auks_credcache);
+	fstatus = auks_krb5_cc_destroy(auks_credcache);
 	if (fstatus) {
 	      xerror("Unable to destroy ccache %s",auks_credcache);
 	      goto out;
@@ -794,6 +797,9 @@ _parse_plugstack_conf (spank_t sp, int ac, char *av[])
 		}
 		else if (strncmp ("force_file_ccache", av[i], 17) == 0) {
 		        auks_force_file_ccache = 1;
+		}
+		else if (strncmp ("no_cc_switch", av[i], 12) == 0) {
+		        auks_cc_switch = 0;
 		}
 		else if (strncmp ("minimum_uid=", av[i], 12) == 0) {
 		        auks_minimum_uid = (uid_t) strtol(av[i]+12,NULL,10);
