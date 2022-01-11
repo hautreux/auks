@@ -118,6 +118,13 @@ of auks prior to version 0.5.0.
 When no set, use the new default storage logic using the ccache type defined in krb5.conf
 (mandatory when use keyring or KCM caches, especially useful with polyinstanciated
 temporary directories).
+.LP
+.TP
+\fBno_cc_switch\fR
+The new default storage logic for credential force the selection of the freshly stored
+credential as the new default one for the associated type using the krb5_cc_switch call.
+This behavior might introduce strange behaviors in case multiple concurrent jobs are
+started on a same node for a same user. This option disables this switch logic.
 
 .SH "COPYING"
 .LP

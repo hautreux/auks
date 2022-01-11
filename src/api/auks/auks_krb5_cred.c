@@ -125,7 +125,7 @@ _krb_is_local_tgt(krb5_principal princ, krb5_data *realm)
 }
 
 int
-auks_krb_cc_new_unique(char ** fullname_out)
+auks_krb5_cc_new_unique(char ** fullname_out, int cc_switch)
 {
 	int fstatus;
 
@@ -156,7 +156,8 @@ auks_krb_cc_new_unique(char ** fullname_out)
 	/* Generate a new unique ccache */
 	fstatus = krb5_cc_new_unique(context, ccache_type, NULL, &ccache);
 	if (fstatus) {
-		auks_error("Error while generating new unique ccache of type %s", ccache_type);
+		auks_error("Error while generating new unique ccache of type %s",
+			   ccache_type);
 		fstatus = AUKS_ERROR_KRB5_CRED_OPEN_CC ;
 		goto out;
 	}
@@ -176,7 +177,7 @@ auks_krb_cc_new_unique(char ** fullname_out)
 	strcpy(*fullname_out, ccache_name);
 
 	/* Call krb5_cc_switch for ccache that supports it */
-	if (krb5_cc_support_switch(context, ccache_type)) {
+	if (cc_switch && krb5_cc_support_switch(context, ccache_type)) {
 		fstatus = krb5_cc_switch(context, ccache);
 		if (fstatus) {
 			auks_error("Error while calling krb5_cc_switch");
@@ -198,7 +199,7 @@ auks_krb_cc_new_unique(char ** fullname_out)
 }
 
 int
-auks_krb_cc_destroy(char * fullname)
+auks_krb5_cc_destroy(char * fullname)
 {
         int fstatus;
 
