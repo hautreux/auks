@@ -8,7 +8,7 @@
 
 Summary: Aside Utility for Kerberos Support
 Name: auks
-Version: 0.5.0
+Version: 0.5.3
 Release: 1%{?dist}
 License: CeCILL-C License
 Group: System Environment/Base
@@ -156,6 +156,8 @@ install -D -m644 src/plugins/slurm/slurm-spank-auks.conf ${RPM_BUILD_ROOT}/etc/s
 %endif
 
 %changelog
+* Tue Jan 11 2022 Matthieu Hautreux <matthieu.hautreux@cea.fr> - 0.5.3-1
+- adapted to auks version 0.5.3
 * Tue Jun 16 2020 Matthieu Hautreux <matthieu.hautreux@cea.fr> - 0.5.0-1
 - Add libtirpc(-devel) requirements for RHEL>8 and Fedora > 28
 - Add /var/cache/auks directory creation

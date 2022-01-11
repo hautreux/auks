@@ -1,3 +1,23 @@
+01/11/2022 Matthieu Hautreux <matthieu.hautreux@cea.fr>
+	* auks-0.5.3
+	* auks/api: fix a timeline bug in krb5_cc_switch management
+	(performed prior to real cred storage in previous version, it could lead
+	to krb5 errors when initiating concurrent jobs with spank/auks plugin)
+	* spank/auks: add no_cc_switch option to avoid krb5 default cred switch
+	* spank/auks: add force_file_ccache option to force legacy credential
+	storage logic
+	* spank/auks: simplify hostcredcache management (no longer use KRB5CCNAME
+	env variable)
+	* auks_message : allow smaller input msg when unpacking enabling compat
+	between client/server if client uses smaller buffers for messaging
+	(patch from François Diakhaté, CEA)
+	* auksd : remove replay cache disabling support as deprecated in libkrb5
+	* build : fix autoconf/automake issues (patches from Trent Anderson,
+	Rémi Palancher)
+	* man : fix missing fields (patch from Rémi Palancher)
+	* known bugs : keyring ccache type is not yet supported, FILE: or KCM:
+	are the only one tested/validated
+
 06/16/2020 Matthieu Hautreux <matthieu.hautreux@cea.fr>
 
 	* auks-0.5.0
