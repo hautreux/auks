@@ -125,7 +125,7 @@ _krb_is_local_tgt(krb5_principal princ, krb5_data *realm)
 }
 
 int
-auks_krb5_cc_new_unique(char ** fullname_out, int cc_switch)
+auks_krb5_cc_new_unique(char ** fullname_out)
 {
 	int fstatus;
 
@@ -137,15 +137,17 @@ auks_krb5_cc_new_unique(char ** fullname_out, int cc_switch)
 	/* Initialize KRB5 context */
 	fstatus = krb5_init_context(&context);
 	if (fstatus) {
-		auks_error("Error while initializing KRB5");
-		fstatus = AUKS_ERROR_KRB5_CRED_INIT_CTX;
+		auks_error("unable to initialize kerberos context : %s",
+			   error_message(fstatus));
+		fstatus = AUKS_ERROR_KRB5_CRED_INIT_CTX ;
 		return fstatus;
 	}
 
 	/* Get the default ccache */
 	fstatus = krb5_cc_default(context, &ccache);
 	if (fstatus) {
-	        auks_error("Error while getting default ccache");
+	        auks_error("error while getting default ccache : %s",
+			   error_message(fstatus));
 		fstatus = AUKS_ERROR_KRB5_CRED_OPEN_CC ;
 		goto out;
 	}
@@ -156,37 +158,25 @@ auks_krb5_cc_new_unique(char ** fullname_out, int cc_switch)
 	/* Generate a new unique ccache */
 	fstatus = krb5_cc_new_unique(context, ccache_type, NULL, &ccache);
 	if (fstatus) {
-		auks_error("Error while generating new unique ccache of type %s",
-			   ccache_type);
+		auks_error("error while creating new unique ccache of "
+			   "type %s : %s", ccache_type, error_message(fstatus));
 		fstatus = AUKS_ERROR_KRB5_CRED_OPEN_CC ;
 		goto out;
 	}
 
-
 	/* Get ccache full name */
 	fstatus = krb5_cc_get_full_name(context, ccache, &ccache_name);
 	if (fstatus) {
-		auks_error("Error while geting ccache full name");
+		auks_error("error while getting ccache full name : %s",
+			   error_message(fstatus));
 		fstatus = AUKS_ERROR_KRB5_CRED_OPEN_CC ;
-		goto out_cc;
+		krb5_cc_destroy(context, ccache);
+		goto out;
 	}
 
 	/* Set output var */
-	size_t l = strlen(ccache_name) + 1;
-	*fullname_out = (char *) malloc(l * sizeof(char *));
-	strcpy(*fullname_out, ccache_name);
+	*fullname_out = strdup(ccache_name);
 
-	/* Call krb5_cc_switch for ccache that supports it */
-	if (cc_switch && krb5_cc_support_switch(context, ccache_type)) {
-		fstatus = krb5_cc_switch(context, ccache);
-		if (fstatus) {
-			auks_error("Error while calling krb5_cc_switch");
-			fstatus = AUKS_ERROR_KRB5_CRED_OPEN_CC ;
-			goto out_cc;
-		}
-	}
-
- out_cc:
 	/* Close ccache handles */
 	krb5_cc_close(context, ccache);
 
@@ -194,6 +184,59 @@ auks_krb5_cc_new_unique(char ** fullname_out, int cc_switch)
 	krb5_free_string(context, ccache_name);
 
 	/* Free KRB5 context */
+	krb5_free_context(context);
+	return (fstatus);
+}
+
+int
+auks_krb5_cc_switch(char *ccache_name)
+{
+	int fstatus;
+
+	krb5_context context;
+	krb5_ccache ccache = NULL;
+	char *ccache_type = NULL;
+
+	/* initialize krb5 context */
+	fstatus = krb5_init_context(&context);
+	if (fstatus) {
+		auks_error("unable to initialize kerberos context : %s",
+			   error_message(fstatus));
+		fstatus = AUKS_ERROR_KRB5_CRED_INIT_CTX;
+		return (fstatus);
+	}
+
+	/* resolve provided cred ccache */
+	fstatus = krb5_cc_resolve(context, ccache_name, &ccache);
+	if (fstatus) {
+		auks_error("error while resolving credcache %s : %s",
+			   ccache_name, error_message(fstatus));
+		fstatus = AUKS_ERROR_KRB5_CRED_OPEN_CC ;
+		goto out;
+	}
+
+	/* get the associated ccache type */
+	ccache_type = krb5_cc_get_type(context, ccache);
+
+	/* call krb5_cc_switch for ccache if supported, skip otherwise */
+	if (krb5_cc_support_switch(context, ccache_type)) {
+		fstatus = krb5_cc_switch(context, ccache);
+		if (fstatus) {
+			auks_error("error while calling krb5_cc_switch for "
+				   "ccache %s : %s", ccache_name,
+				   error_message(fstatus));
+			fstatus = AUKS_ERROR_KRB5_CRED_OPEN_CC ;
+		} else
+			auks_log("krb5_cc_switch to ccache %s", ccache_name);
+	} else {
+		auks_log("krb5_cc_switch to ccache %s skipped : not supported "
+			 "for type ccache type %s", ccache_name, ccache_type);
+		fstatus = 0;
+	}
+
+	krb5_cc_close(context, ccache);
+
+out:
 	krb5_free_context(context);
 	return (fstatus);
 }
@@ -210,7 +253,8 @@ auks_krb5_cc_destroy(char * fullname)
 	/* Initialize KRB5 context */
 	fstatus = krb5_init_context(&context);
 	if (fstatus) {
-		auks_error("Error while initializing KRB5");
+		auks_error("unable to initialize kerberos context : %s",
+			   error_message(fstatus));
 		fstatus = AUKS_ERROR_KRB5_CRED_INIT_CTX;
 		return (fstatus);
 	}
@@ -218,19 +262,21 @@ auks_krb5_cc_destroy(char * fullname)
 	/* Find and destroy ccache */
 	fstatus = krb5_cc_resolve(context, fullname, &ccache);
 	if (fstatus) {
-		auks_error("Error while opening credcache %s", fullname);
+		auks_error("error while resolving credcache %s : %s",
+			   fullname, error_message(fstatus));
 		fstatus = AUKS_ERROR_KRB5_CRED_OPEN_CC ;
 		goto cc_exit;
 	}
 
 	fstatus = krb5_cc_destroy(context, ccache);
 	if (fstatus && fstatus != KRB5_FCC_NOFILE) {
-		auks_error("Error while destroying cache %s", fullname);
+		auks_error("error while destroying cache %s : %s",
+			   fullname, error_message(fstatus));
 		fstatus = AUKS_ERROR_KRB5_CRED_READ_CC;
 		goto out;
 	}
 
-        auks_log("Destroyed ccache %s", fullname);
+        auks_log("destroyed ccache %s", fullname);
 
  out:
 	/* Free KRB5 context */
@@ -244,6 +290,7 @@ auks_krb5_cc_destroy(char * fullname)
 
 	goto out;
 }
+
 int
 auks_krb5_cred_get(char *ccachefilename,char **pbuffer,
 		   size_t * plength)
@@ -489,7 +536,8 @@ auks_krb5_cred_store(char *cachefilename, char *buffer,
 			   "cache : %s",error_message(err_code));
 		fstatus = AUKS_ERROR_KRB5_CRED_STORE_CRED ;
 	} else {
-		auks_log("credential successfully stored in credential cache");
+		auks_log("credential successfully stored in credential "
+			 "cache %s", cachefilename);
 		fstatus = AUKS_SUCCESS ;
 	}
 

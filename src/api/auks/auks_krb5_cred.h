@@ -212,7 +212,6 @@ int auks_krb5_cred_renew_buffer(char *in_buf,size_t in_buf_len,
 int auks_krb5_cred_deladdr_buffer(char *in_buf,size_t in_buf_len,
 				  char** pout_buf,size_t *pout_buf_len);
 
-
 /*!
  * \brief Generates a new unique ccache usique krb5_cc_new_unique
  * \internal
@@ -228,7 +227,21 @@ int auks_krb5_cred_deladdr_buffer(char *in_buf,size_t in_buf_len,
  * \retval AUKS_ERROR_KRB5_CRED_OPEN_CC
  *
  */
-int auks_krb5_cc_new_unique(char ** fullname_out, int cc_switch);
+int auks_krb5_cc_new_unique(char ** fullname_out);
+
+/*!
+ * \brief krb5_cc_switch to the specified ccache
+ * \internal
+ *
+ * \param ccache_name Name of the ccache to switch to
+ *
+ * \retval AUKS_SUCCESS
+ * \retval AUKS_ERROR
+ * \retval AUKS_ERROR_KRB5_CRED_INIT_CTX
+ * \retval AUKS_ERROR_KRB5_CRED_OPEN_CC
+ *
+ */
+int auks_krb5_cc_switch(char *ccache_name);
 
 /*!
  * \brief Destroys the given ccache

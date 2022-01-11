@@ -515,7 +515,7 @@ spank_auks_remote_init (spank_t sp, int ac, char *av[])
 	 * to initialize a new unique ccache using the default ccache type
 	 * of the libkrb5/conf, otherwise revert to original file cache logic */
 	if (!auks_force_file_ccache) {
-		fstatus = auks_krb5_cc_new_unique(&auks_credcache, auks_cc_switch);
+		fstatus = auks_krb5_cc_new_unique(&auks_credcache);
 		if (fstatus) {
 			xerror("error while initializing a new unique");
 			goto out_err;
@@ -555,8 +555,19 @@ spank_auks_remote_init (spank_t sp, int ac, char *av[])
 		fstatus = AUKS_ERROR_API_REPLY_PROCESSING ;
 		goto out_err;
 	}
-
 	xinfo("user '%u' cred stored in ccache %s",uid, auks_credcache);
+
+	/* if force_file_ccache is not set and we were not asked to avoid
+	   switching the default ccache to this new one, then do it */
+	if (!auks_force_file_ccache && auks_cc_switch) {
+		fstatus = auks_krb5_cc_switch(auks_credcache);
+		if ( fstatus != AUKS_SUCCESS ) {
+			xerror("warning : krb5_cc_switch to cred %s failed : %s",
+			       auks_credcache, auks_strerror(fstatus));
+			/* just continue in case of error, no big deal */
+			fstatus = AUKS_SUCCESS ;
+		}
+	}
 
 	if ( auks_spankstack ) {
 		setenv("KRB5CCNAME", auks_credcache, 1);
