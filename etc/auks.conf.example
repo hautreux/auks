@@ -74,7 +74,7 @@ auksd {
  CacheDir           = 	"/var/cache/auks" ;
 
  # ACL file for cred repo access authorization rules
- ACLFile            = 	"/etc/auks/auksd.acl" ;	
+ ACLFile            = 	"/etc/auks/auks.acl" ;	
 
  # default size of incoming requests queue
  # it grows up dynamically
