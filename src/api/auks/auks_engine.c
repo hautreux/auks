@@ -168,7 +168,8 @@ auks_engine_init(auks_engine_t * engine,
 		 char* renewer_logfile,int renewer_loglevel,
 		 char* renewer_debugfile,int renewer_debuglevel,
 		 time_t renewer_delay,
-		 time_t renewer_minlifetime)
+		 time_t renewer_minlifetime,
+		 char *helper_script)
 {
 	int fstatus = AUKS_ERROR ;
 
@@ -228,6 +229,7 @@ auks_engine_init(auks_engine_t * engine,
 	engine->renewer_delay = renewer_delay;
 	engine->renewer_minlifetime = renewer_minlifetime;
 
+	init_strdup(engine->helper_script, helper_script);
 
 	if (engine->primary_hostname == NULL ||
 	    engine->primary_address == NULL ||
@@ -388,6 +390,8 @@ auks_engine_init_from_config_file(auks_engine_t * engine, char *conf_file)
 	char *delay_str;
 	char *nat_str;
 	
+	char *helper_script;
+
 	long int ll, dl, rnb, timeout, delay;
 
 	char *renewer_lfile;
@@ -575,6 +579,11 @@ auks_engine_init_from_config_file(auks_engine_t * engine, char *conf_file)
 		if (dl == LONG_MIN || dl == LONG_MAX)
 			dl = DEFAULT_AUKS_DEBUGLEVEL;
 
+		/* read helper script value */
+		helper_script = config_GetKeyValueByName(config, i, "HelperScript");
+		if (helper_script == NULL)
+			helper_script = DEFAULT_AUKS_HELPER_SCRIPT;
+
 		valid_block_nb++;
 
 	}
@@ -655,7 +664,8 @@ auks_engine_init_from_config_file(auks_engine_t * engine, char *conf_file)
 					   rnb,timeout,delay,nat,
 					   renewer_lfile,renewer_ll,
 					   renewer_dfile,renewer_dl,
-					   renewer_delay,renewer_minlifetime);
+					   renewer_delay,renewer_minlifetime,
+					   helper_script);
 		
 	}
 	

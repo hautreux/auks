@@ -115,6 +115,7 @@
 #define DEFAULT_AUKSD_LOGLEVEL          1
 #define DEFAULT_AUKSD_DEBUGFILE         "/var/log/auksd.log"
 #define DEFAULT_AUKSD_DEBUGLEVEL        0
+#define DEFAULT_AUKS_HELPER_SCRIPT	NULL
 
 #define DEFAULT_AUKSD_THREADS_NB       10
 #define DEFAULT_AUKSD_QUEUE_SIZE       50
@@ -166,6 +167,7 @@ typedef struct auks_engine {
 	int retries;
 	time_t timeout;
 	time_t delay;
+	char *helper_script;
 
 	int nat_traversal;
 
@@ -226,6 +228,8 @@ typedef struct auks_engine {
  * \param renewer_minlifetime min lifetime for a cred to be renewed by the
  *        renewer
  *
+ * \param helper_script optional path to helper script to run during cred renewal
+ *
  * \retval AUKS_SUCCESS on success
  * \retval AUKS_ERROR on failure
  *  
@@ -247,7 +251,8 @@ auks_engine_init(auks_engine_t * engine,
 		 char* renewer_logfile,int renewer_loglevel,
 		 char* renewer_debugfile,int renewer_debuglevel,
 		 time_t renewer_delay,
-		 time_t renewer_minlifetime);
+		 time_t renewer_minlifetime,
+		 char *helper_script);
 
 /*!
  * \brief Initialize auks engine structure from a configuration file

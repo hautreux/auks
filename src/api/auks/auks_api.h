@@ -272,6 +272,20 @@ int
 auks_api_dump_unpack(auks_message_t* msg,auks_cred_t** pcreds,int* pcreds_nb);
 
 /*!
+ * \brief Run helper script as user
+ *
+ * \param helper_script path to the script to be exec'ed
+ * \param auks_credcache ccache credential file to set for helper_script
+ * \param uid user uid to drop privileges to
+ * \param gid user gid to drop privileges to
+ *
+ * \retval AUKS_SUCCESS
+ * \retval AUKS_ERROR
+ */
+int
+auks_api_run_helper(char *helper_script, char *auks_credcache, uid_t uid, gid_t gid);
+
+/*!
  * @}
 */
 #endif
