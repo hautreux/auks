@@ -325,9 +325,20 @@ auks_krb5_cred_get(char *ccachefilename,char **pbuffer,
 	auks_log("kerberos context successfully initialized");
 
 	/* initialize kerberos credential cache structure */
-	if (ccachefilename == NULL)
+	if (ccachefilename == NULL) {
+		/* Starting with krb5-1.18, seteuid processes ignore
+		 * KRB5CCNAME in krb5_cc_default().
+		 * Therefore set the default explicitly. */
+		char *krb5ccenv = getenv("KRB5CCNAME");
+		if (krb5ccenv != NULL) {
+			err_code = krb5_cc_set_default_name(context, krb5ccenv);
+			if (err_code) {
+				auks_error("unable to set default credential cache name to '%s': %s",
+					   krb5ccenv, error_message(err_code));
+			}
+		}
 		err_code = krb5_cc_default(context, &ccache);
-	else
+	} else
 		err_code = krb5_cc_resolve(context, ccachefilename,&ccache);
 	if (err_code) {
 		auks_error("unable to resolve credential cache : %s",
