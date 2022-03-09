@@ -381,6 +381,7 @@ auks_engine_init_from_config_file(auks_engine_t * engine, char *conf_file)
 	char *lfile;
 	char *dfile;
 	
+	char *syslog;
 	char *ll_str;
 	char *dl_str;
 	char *rnb_str;
@@ -574,6 +575,13 @@ auks_engine_init_from_config_file(auks_engine_t * engine, char *conf_file)
 			dl = strtol(dl_str, NULL, 10);
 		if (dl == LONG_MIN || dl == LONG_MAX)
 			dl = DEFAULT_AUKS_DEBUGLEVEL;
+
+		syslog = config_GetKeyValueByName(config, i, "UseSyslog");
+		if (syslog != NULL) {
+			ll = strtol(syslog, NULL, 10);
+			if (ll != LONG_MIN && ll != LONG_MAX && ll != 0)
+				xverbose_usesyslog();
+		}
 
 		valid_block_nb++;
 
