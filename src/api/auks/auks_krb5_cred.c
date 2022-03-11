@@ -124,6 +124,37 @@ _krb_is_local_tgt(krb5_principal princ, krb5_data *realm)
 		_krb_data_eq(princ->data[1], *realm);
 }
 
+void
+auks_krb5_set_default_name(krb5_context context)
+{
+	/* Starting with krb5-1.18, seteuid processes ignore
+	 * KRB5CCNAME in krb5_cc_default().
+	 * Therefore set the default explicitly. */
+	char *krb5ccenv = getenv("KRB5CCNAME");
+	if (krb5ccenv != NULL) {
+		int err_code = krb5_cc_set_default_name(context, krb5ccenv);
+		if (err_code) {
+			auks_error("unable to set default credential cache name to '%s': %s",
+				   krb5ccenv, error_message(err_code));
+		} else {
+			auks_log("credential cache set to %s", krb5ccenv);
+		}
+	}
+}
+
+int
+auks_krb5_init(krb5_context *context)
+{
+	/* Initialize KRB5 context */
+	int fstatus = krb5_init_context(context);
+	if (fstatus)
+		return fstatus;
+
+	auks_krb5_set_default_name(*context);
+
+	return fstatus;
+}
+
 int
 auks_krb5_cc_new_unique(char ** fullname_out)
 {
@@ -135,7 +166,7 @@ auks_krb5_cc_new_unique(char ** fullname_out)
 	char *ccache_type = NULL, *ccache_name = NULL;
 
 	/* Initialize KRB5 context */
-	fstatus = krb5_init_context(&context);
+	fstatus = auks_krb5_init(&context);
 	if (fstatus) {
 		auks_error("unable to initialize kerberos context : %s",
 			   error_message(fstatus));
@@ -198,7 +229,7 @@ auks_krb5_cc_switch(char *ccache_name)
 	char *ccache_type = NULL;
 
 	/* initialize krb5 context */
-	fstatus = krb5_init_context(&context);
+	fstatus = auks_krb5_init(&context);
 	if (fstatus) {
 		auks_error("unable to initialize kerberos context : %s",
 			   error_message(fstatus));
@@ -251,7 +282,7 @@ auks_krb5_cc_destroy(char * fullname)
 
 
 	/* Initialize KRB5 context */
-	fstatus = krb5_init_context(&context);
+	fstatus = auks_krb5_init(&context);
 	if (fstatus) {
 		auks_error("unable to initialize kerberos context : %s",
 			   error_message(fstatus));
@@ -315,7 +346,7 @@ auks_krb5_cred_get(char *ccachefilename,char **pbuffer,
 	size_t length;
 
 	/* initialize kerberos context */
-	err_code = krb5_init_context(&context);
+	err_code = auks_krb5_init(&context);
 	if (err_code) {
 		auks_error("unable to initialize kerberos context : %s",
 			   error_message(err_code));
@@ -325,20 +356,9 @@ auks_krb5_cred_get(char *ccachefilename,char **pbuffer,
 	auks_log("kerberos context successfully initialized");
 
 	/* initialize kerberos credential cache structure */
-	if (ccachefilename == NULL) {
-		/* Starting with krb5-1.18, seteuid processes ignore
-		 * KRB5CCNAME in krb5_cc_default().
-		 * Therefore set the default explicitly. */
-		char *krb5ccenv = getenv("KRB5CCNAME");
-		if (krb5ccenv != NULL) {
-			err_code = krb5_cc_set_default_name(context, krb5ccenv);
-			if (err_code) {
-				auks_error("unable to set default credential cache name to '%s': %s",
-					   krb5ccenv, error_message(err_code));
-			}
-		}
+	if (ccachefilename == NULL)
 		err_code = krb5_cc_default(context, &ccache);
-	} else
+	else
 		err_code = krb5_cc_resolve(context, ccachefilename,&ccache);
 	if (err_code) {
 		auks_error("unable to resolve credential cache : %s",
@@ -478,7 +498,7 @@ auks_krb5_cred_store(char *cachefilename, char *buffer,
 	krb5_replay_data krdata;
 
 	/* initialize kerberos context */
-	err_code = krb5_init_context(&context);
+	err_code = auks_krb5_init(&context);
 	if (err_code) {
 		auks_error("unable to initialize kerberos context : %s",
 			   error_message(err_code));
@@ -548,7 +568,8 @@ auks_krb5_cred_store(char *cachefilename, char *buffer,
 		fstatus = AUKS_ERROR_KRB5_CRED_STORE_CRED ;
 	} else {
 		auks_log("credential successfully stored in credential "
-			 "cache %s", cachefilename);
+			 "cache %s",
+			 (cachefilename==NULL)?"default file":cachefilename);
 		fstatus = AUKS_SUCCESS ;
 	}
 
@@ -600,7 +621,7 @@ auks_krb5_cred_get_fwd(char *ccachefilename, char *serverName,
 	}
 
 	/* initialize kerberos context */
-	err_code = krb5_init_context(&context);
+	err_code = auks_krb5_init(&context);
 	if (err_code) {
 		auks_error("unable to initialize kerberos context : %s",
 			   error_message(err_code));
@@ -766,7 +787,7 @@ auks_krb5_cred_renew(char *ccachefilename)
 	krb5_principal princ;
 
 	/* initialize kerberos context */
-	err_code = krb5_init_context(&context);
+	err_code = auks_krb5_init(&context);
 	if (err_code) {
 		auks_error("unable to initialize kerberos context : %s",
 			   error_message(err_code));
@@ -941,7 +962,7 @@ auks_krb5_cred_renew_buffer(char *in_buf,size_t in_buf_len,
 	size_t length;
 
 	/* initialize kerberos context */
-	err_code = krb5_init_context(&context);
+	err_code = auks_krb5_init(&context);
 	if (err_code) {
 		auks_error("unable to initialize kerberos context : %s",
 			   error_message(err_code));
@@ -1107,7 +1128,7 @@ auks_krb5_cred_deladdr_buffer(char *in_buf,size_t in_buf_len,
 	size_t length;
 
 	/* initialize kerberos context */
-	err_code = krb5_init_context(&context);
+	err_code = auks_krb5_init(&context);
 	if (err_code) {
 		auks_error("unable to initialize kerberos context : %s",
 			   error_message(err_code));

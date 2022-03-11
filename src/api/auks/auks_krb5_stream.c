@@ -842,6 +842,8 @@ auks_krb5_stream_init_base(auks_krb5_stream_t * kstream, int stream,int flags)
 	kstream->context_flag = 1;
 	auks_log("context initialization succeed");
 
+	auks_krb5_set_default_name(kstream->context);
+
 	/* kerberos : connection authentication context */
 	kstatus = krb5_auth_con_init(kstream->context,&kstream->auth_context);
 	if (kstatus) {
