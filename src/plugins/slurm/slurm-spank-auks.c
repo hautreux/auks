@@ -198,10 +198,15 @@ _setegid (gid_t gid) {
 int
 slurm_spank_init (spank_t sp, int ac, char *av[])
 {
+	uint32_t stepid;
+
 	spank_option_register(sp,spank_opts);
 	_parse_plugstack_conf(sp,ac,av);
 
 	if (!spank_remote (sp))
+		return 0;
+	else if (spank_get_item (sp, S_JOB_STEPID, &stepid) == ESPANK_SUCCESS &&
+			stepid == SLURM_EXTERN_CONT)
 		return 0;
 	else
 		return spank_auks_remote_init(sp,ac,av);
@@ -346,7 +351,12 @@ slurm_spank_user_init (spank_t sp, int ac, char **av)
 int
 slurm_spank_exit (spank_t sp, int ac, char **av)
 {
+	uint32_t stepid;
+
 	if (!spank_remote (sp))
+		return 0;
+	else if (spank_get_item (sp, S_JOB_STEPID, &stepid) == ESPANK_SUCCESS &&
+			stepid == SLURM_EXTERN_CONT)
 		return 0;
 	else
 		return spank_auks_remote_exit(sp,ac,av);
