@@ -116,6 +116,8 @@
  */
 SPANK_PLUGIN(auks, 1);
 
+static auks_engine_t auks_engine;
+
 #define CREDCACHE_MAXLENGTH 128
 static char auks_file_credcache[CREDCACHE_MAXLENGTH];
 static char *auks_credcache = NULL;
@@ -361,7 +363,6 @@ slurm_spank_exit (spank_t sp, int ac, char **av)
 int spank_auks_local_user_init (spank_t sp, int ac, char **av)
 {
 	int fstatus;
-	auks_engine_t engine;
 
 	int mode;
 
@@ -387,14 +388,14 @@ int spank_auks_local_user_init (spank_t sp, int ac, char **av)
 	}
 
 	/* load auks conf */
-	fstatus = auks_api_init(&engine,auks_conf_file);
+	fstatus = auks_api_init(&auks_engine,auks_conf_file);
 	if ( fstatus != AUKS_SUCCESS ) {
 		xerror("API init failed : %s",auks_strerror(fstatus));
 		return -1;
 	}
 
 	/* send credential to auks daemon */
-	fstatus = auks_api_add_cred(&engine,NULL);
+	fstatus = auks_api_add_cred(&auks_engine,NULL);
 
 	if (fstatus == AUKS_ERROR_KRB5_CRED_READ_CC) {
 		if (!auks_enforced) {
@@ -436,7 +437,7 @@ int spank_auks_local_user_init (spank_t sp, int ac, char **av)
 	}
 
 	/* unload auks conf */
-	auks_api_close(&engine);
+	auks_api_close(&auks_engine);
 
 	return fstatus;
 }
@@ -446,7 +447,6 @@ int
 spank_auks_remote_init (spank_t sp, int ac, char *av[])
 {
 	int fstatus;
-	auks_engine_t engine;
 
 	static uint32_t jobid;
 	uid_t uid;
@@ -499,7 +499,7 @@ spank_auks_remote_init (spank_t sp, int ac, char *av[])
 	}
 
 	/* initialize auks API */
-	fstatus = auks_api_init(&engine,auks_conf_file);
+	fstatus = auks_api_init(&auks_engine,auks_conf_file);
 	if ( fstatus != AUKS_SUCCESS ) {
 		xerror("API init failed : %s",auks_strerror(fstatus));
 		goto exit;
@@ -507,10 +507,10 @@ spank_auks_remote_init (spank_t sp, int ac, char *av[])
 
 	/* force hostcredcache if the spank option ask so */
 	if (auks_hostcredcache_file != NULL)
-		auks_api_set_ccache(&engine, auks_hostcredcache_file);
+		auks_api_set_ccache(&auks_engine, auks_hostcredcache_file);
 
 	/* get auks cred */
-	fstatus = auks_api_get_auks_cred(&engine,uid,&cred);
+	fstatus = auks_api_get_auks_cred(&auks_engine,uid,&cred);
 	if( fstatus ) {
 		xerror("unable to unpack auks cred from reply : %s",
 		       auks_strerror(fstatus));
@@ -607,9 +607,6 @@ spank_auks_remote_init (spank_t sp, int ac, char *av[])
 	_seteuid(getuid());
 	_setegid(getgid());
 
-	/* unload auks conf */
-	auks_api_close(&engine);
-
 exit:
 	return (fstatus);
 
@@ -699,6 +696,9 @@ out:
 	/* replace privileged uid/gid */
 	_seteuid(getuid());
 	_setegid(getgid());
+
+	/* unload auks conf */
+	auks_api_close(&auks_engine);
 
 	/* free auks sync mode if needed */
 	if ( auks_sync_mode != NULL )
