@@ -85,6 +85,7 @@
 #include <sys/types.h>
 #include <sys/wait.h>
 #include <sys/stat.h>
+#include <sys/syscall.h>
 
 #include <signal.h>
 
@@ -166,6 +167,25 @@ int spank_auks_remote_init (spank_t sp, int ac, char *av[]);
 /* slurmstepd : remove user localy stored credential */
 int spank_auks_remote_exit (spank_t sp, int ac, char **av);
 
+/* raw syscalls to limit uid/gid changes to this thread */
+static inline int
+_seteuid (uid_t uid) {
+#if defined(SYS_setresuid32)
+	return syscall(SYS_setresuid32, -1, uid, -1);
+#else
+	return syscall(SYS_setresuid, -1, uid, -1);
+#endif
+}
+
+static inline int
+_setegid (gid_t gid) {
+#if defined(SYS_setresgid32)
+	return syscall(SYS_setresgid32, -1, gid, -1);
+#else
+	return syscall(SYS_setresgid, -1, gid, -1);
+#endif
+}
+
 /*
  *
  * SLURM SPANK API SLURM SPANK API SLURM SPANK API SLURM SPANK API 
@@ -242,15 +262,15 @@ slurm_spank_task_exit (spank_t sp, int ac, char **av)
 			     "(pid=%u)",renewer_pid);
 
 			/* change to user uid/gid before the kill */
-			if ( setegid(gid) ) {
+			if ( _setegid(gid) ) {
 				xerror("unable to switch to user gid : %s",
 				      strerror(errno));
 				return (-1);
 			}
-			if ( seteuid(uid) ) {
+			if ( _seteuid(uid) ) {
 				xerror("unable to switch to user uid : %s",
 				      strerror(errno));
-				setegid(getgid());
+				_setegid(getgid());
 				return (-1);
 			}
 
@@ -264,8 +284,8 @@ slurm_spank_task_exit (spank_t sp, int ac, char **av)
 			waitpid(renewer_pid, NULL, 0);
 
 			/* replace privileged uid/gid */
-			seteuid(getuid());
-			setegid(getgid());
+			_seteuid(getuid());
+			_setegid(getgid());
 
 		}
 
@@ -499,13 +519,13 @@ spank_auks_remote_init (spank_t sp, int ac, char *av[])
 	}
 
 	/* change to user uid and gid before storing cred */
-	if ( setegid(gid) ) {
+	if ( _setegid(gid) ) {
 		xerror("unable to switch to user gid : %s",
 		       strerror(errno));
 		goto out_cred;
 	}
 
-	if ( seteuid(uid) ) {
+	if ( _seteuid(uid) ) {
 		xerror("unable to switch to user uid : %s",
 		       strerror(errno));
 		goto out_cred;
@@ -584,8 +604,8 @@ spank_auks_remote_init (spank_t sp, int ac, char *av[])
 
  unload:
 	/* reset privileged uid/gid */
-	seteuid(getuid());
-	setegid(getgid());
+	_seteuid(getuid());
+	_setegid(getgid());
 
 	/* unload auks conf */
 	auks_api_close(&engine);
@@ -643,7 +663,7 @@ spank_auks_remote_exit (spank_t sp, int ac, char **av)
 	}
 
 	/* change to user gid before removing cred */
-	if ( setegid(gid) ) {
+	if ( _setegid(gid) ) {
 		xerror("unable to switch to user gid : %s",
 		      strerror(errno));
 		fstatus = -1;
@@ -651,7 +671,7 @@ spank_auks_remote_exit (spank_t sp, int ac, char **av)
 	}
 
 	/* change to user uid and gid before removing cred */
-	if ( seteuid(uid) ) {
+	if ( _seteuid(uid) ) {
 		xerror("unable to switch to user uid : %s",
 		      strerror(errno));
 		fstatus = -1;
@@ -677,8 +697,8 @@ out:
 	auks_credcache = NULL;
 
 	/* replace privileged uid/gid */
-	seteuid(getuid());
-	setegid(getgid());
+	_seteuid(getuid());
+	_setegid(getgid());
 
 	/* free auks sync mode if needed */
 	if ( auks_sync_mode != NULL )
