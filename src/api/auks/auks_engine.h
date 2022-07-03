@@ -95,6 +95,8 @@
 #define DEFAULT_AUKS_DEBUGFILE          "/tmp/auksapi.log"
 #define DEFAULT_AUKS_DEBUGLEVEL         0
 
+#define DEFAULT_AUKS_CROSSREALM         ""
+
 #ifndef DEFAULT_AUKS_CONF
 #define DEFAULT_AUKS_CONF               SYSCONFDIR "/auks.conf"
 #endif
@@ -157,6 +159,8 @@ typedef struct auks_engine {
 	char *secondary_address;
 	char *secondary_port;
 	char *secondary_principal;
+
+	char *cross_realm;
 
 	char *logfile;
 	int loglevel;
@@ -240,6 +244,7 @@ auks_engine_init(auks_engine_t * engine,
 		 char *secondary_address,
 		 char *secondary_port,
 		 char *secondary_principal,
+		 char *cross_realm,
 		 char *logfile,int loglevel,
 		 char *debugfile,int debuglevel,
 		 int retries,time_t timeout,

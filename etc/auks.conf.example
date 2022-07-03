@@ -20,6 +20,10 @@ common {
  SecondaryPort      = 	"12345" ;
  SecondaryPrincipal = 	"host/auks2.myrealm.org@MYREALM.ORG" ;
 
+ # If set, an attempt will be made to acquire a cross-realm ticket
+ # for the given realm before forwarding credentials
+ CrossRealm         =	"" ;
+
  # Enable/Disable NAT traversal support (yes/no)
  # this value must be the same on every nodes
  NAT                =  	no ;
