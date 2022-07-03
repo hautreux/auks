@@ -117,6 +117,8 @@ auks_engine_free_contents(auks_engine_t * engine)
 	xfree(engine->secondary_port);
 	xfree(engine->secondary_principal);
 
+	xfree(engine->cross_realm);
+
 	xfree(engine->logfile);
 	xfree(engine->debugfile);
 
@@ -161,6 +163,7 @@ auks_engine_init(auks_engine_t * engine,
 		 char *secondary_address,
 		 char *secondary_port,
 		 char *secondary_principal,
+		 char *cross_realm,
 		 char *logfile,int loglevel,
 		 char *debugfile,int debuglevel,
 		 int retries,time_t timeout,
@@ -207,6 +210,9 @@ auks_engine_init(auks_engine_t * engine,
 	init_strdup(engine->secondary_principal,
 		    secondary_principal);
 
+	init_strdup(engine->cross_realm,
+		    cross_realm);
+
 	init_strdup(engine->logfile,logfile);
 	engine->loglevel = loglevel;
 
@@ -237,6 +243,7 @@ auks_engine_init(auks_engine_t * engine,
 	    engine->secondary_address == NULL ||
 	    engine->secondary_port == NULL ||
 	    engine->secondary_principal == NULL ||
+	    engine->cross_realm == NULL ||
 	    engine->logfile == NULL || 
 	    engine->debugfile == NULL  ||
 	    engine->renewer_logfile == NULL || 
@@ -270,6 +277,10 @@ auks_engine_init(auks_engine_t * engine,
 	auks_log2("engine %s is %s",
 		  "secondary daemon principal",
 		  engine->secondary_principal);
+
+	auks_log2("engine %s is %s",
+		  "cross realm",
+		  engine->cross_realm);
 
 	auks_log2("engine %s is %s", "logfile",
 		  engine->logfile);
@@ -377,6 +388,8 @@ auks_engine_init_from_config_file(auks_engine_t * engine, char *conf_file)
 	char *sadd;
 	char *sport;
 	char *sprinc;
+
+	char *crealm;
 
 	char *lfile;
 	char *dfile;
@@ -492,6 +505,12 @@ auks_engine_init_from_config_file(auks_engine_t * engine, char *conf_file)
 						 "SecondaryPrincipal");
 		if (sprinc == NULL)
 			sprinc = DEFAULT_AUKSD_SECONDARY_PRINC;
+		
+		crealm =
+			config_GetKeyValueByName(config, i,
+						 "CrossRealm");
+		if (crealm == NULL)
+			crealm = DEFAULT_AUKS_CROSSREALM;
 		
 		/* retry nb value */
 		rnb_str =
@@ -651,6 +670,7 @@ auks_engine_init_from_config_file(auks_engine_t * engine, char *conf_file)
 		fstatus = auks_engine_init(engine,
 					   phost,padd, pport, pprinc,
 					   shost,sadd, sport, sprinc,
+					   crealm,
 					   lfile,ll,dfile,dl,
 					   rnb,timeout,delay,nat,
 					   renewer_lfile,renewer_ll,

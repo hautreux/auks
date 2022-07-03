@@ -301,6 +301,9 @@ auks_strerror(int error)
 	case AUKS_ERROR_KRB5_CRED_GET_FWD :
 		return "krb5 cred : " "unable to get forwarded cred" ;
 		break ;
+	case AUKS_ERROR_KRB5_CRED_GET_CROSS_REALM_CRED :
+		return "krb5 cred : " "unable to get cross-realm cred";
+		break ;
 
 	/* -- AUKS KRB5 STREAM */
 	case AUKS_ERROR_KRB5_STREAM_GETSOCKNAME :

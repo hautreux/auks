@@ -552,6 +552,15 @@ auks_api_add_auks_cred(auks_engine_t * engine,auks_cred_t* cred)
 
 	}
 
+	if ( cred->info.crossrealm != 1 && strlen(engine->cross_realm) > 0 ) {
+		fstatus = auks_cred_cross_realm(engine->cross_realm, cred);
+		if ( fstatus != AUKS_SUCCESS )
+			auks_log2("unable to acquire cross-realm auks cred : %s",
+					auks_strerror(fstatus));
+		else
+			auks_log3("cross-realm auks cred successfully retrieved");
+	}
+
 	/* initialize add message */
 	fstatus = auks_message_init(&req,AUKS_ADD_REQUEST,
 				    cred->data,cred->length);
