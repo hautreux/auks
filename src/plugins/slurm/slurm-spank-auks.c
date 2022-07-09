@@ -75,6 +75,8 @@
 #include <config.h>
 #endif
 
+#include <fcntl.h>
+#include <paths.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <unistd.h>
@@ -331,6 +333,12 @@ slurm_spank_user_init (spank_t sp, int ac, char **av)
 		sigset_t mask;
 		sigemptyset(&mask);
 		sigprocmask(SIG_SETMASK, &mask, NULL);
+		int fd = open(_PATH_DEVNULL, O_RDWR|O_CLOEXEC);
+		if (fd >= 0) {
+			dup2(fd, STDIN_FILENO);
+			dup2(fd, STDOUT_FILENO);
+			dup2(fd, STDERR_FILENO);
+		}
 		char *argv[4];
 		argv[0]= BINDIR "/auks" ;
 		argv[1]="-R";argv[2]="loop";
