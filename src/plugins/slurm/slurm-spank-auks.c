@@ -343,7 +343,8 @@ slurm_spank_user_init (spank_t sp, int ac, char **av)
 		argv[0]= BINDIR "/auks" ;
 		argv[1]="-R";argv[2]="loop";
 		argv[3]=NULL;
-		setenv("KRB5CCNAME",auks_credcache,1);
+		if (auks_credcache != NULL)
+			setenv("KRB5CCNAME",auks_credcache,1);
 		chdir("/");
 		execv(argv[0],argv);
 		xerror("unable to exec credential renewer (%s)",argv[0]);
@@ -475,6 +476,8 @@ spank_auks_remote_init (spank_t sp, int ac, char *av[])
 	int mode;
 
 	auks_cred_t cred;
+	auks_cred_t curcred;
+	char credcache[CREDCACHE_MAXLENGTH];
 
 	/* get required auks mode */
 	mode = _spank_auks_get_current_mode(sp,ac,av);
@@ -546,6 +549,16 @@ spank_auks_remote_init (spank_t sp, int ac, char *av[])
 	if ( _seteuid(uid) ) {
 		xerror("unable to switch to user uid : %s",
 		       strerror(errno));
+		goto out_cred;
+	}
+
+	/* check if a credential for the user already exists in the cache */
+	fstatus = spank_getenv(sp,"KRB5CCNAME",
+			       credcache,CREDCACHE_MAXLENGTH);
+	fstatus = auks_cred_extract(&curcred,fstatus ? NULL : credcache);
+	if ( fstatus == AUKS_SUCCESS ) {
+		xinfo("user '%u' cred found in ccache",uid);
+		auks_cred_free_contents(&curcred);
 		goto out_cred;
 	}
 
