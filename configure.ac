@@ -1,5 +1,7 @@
 dnl Package initialisation
-AC_INIT([auks],[0.5.3],[matthieu.hautreux@cea.fr])
+AC_INIT([auks],
+	m4_esyscmd([build-aux/git-version-gen .tarball-version]),
+	[matthieu.hautreux@cea.fr])
 
 dnl Auxiliary scripts directory
 AC_CONFIG_AUX_DIR([build-aux])
@@ -43,6 +45,7 @@ AC_LIBTIRPC
 
 dnl Files to build during configure
 AC_CONFIG_FILES([Makefile
+	        auks.spec
 		src/Makefile
 		src/api/Makefile
 		src/api/confparse/Makefile

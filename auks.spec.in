@@ -5,15 +5,14 @@
 %global _with_systemd 0
 %endif
 
-
 Summary: Aside Utility for Kerberos Support
 Name: auks
-Version: 0.5.3
-Release: 1%{?dist}
+Version: %(echo @PACKAGE_VERSION@ | cut -f 1 -d -)
+Release: %(echo @PACKAGE_VERSION@ | cut -f 2- -d - | tr - _)%{?dist}
 License: CeCILL-C License
 Group: System Environment/Base
 URL: http://sourceforge.net/projects/auks/
-Source0: %{name}-%{version}.tar.gz
+Source0: @PACKAGE_NAME@-@PACKAGE_VERSION@.tar.gz
 
 
 # For kerberos prior to 1.8, you should define
@@ -79,7 +78,7 @@ Plugins that provides Kerberos Credential Support to Slurm
 %endif
 
 %prep
-%setup -q
+%setup -q -n @PACKAGE_NAME@-@PACKAGE_VERSION@
 
 
 %build

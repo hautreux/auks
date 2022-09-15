@@ -82,6 +82,7 @@ flycheck_*.el
 /etc/init.d.auksdrenewer
 /etc/init.d.aukspriv
 /config.h
+/auks.spec
 
 # C Compilation products
 # Prerequisites
