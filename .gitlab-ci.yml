@@ -1,0 +1,16 @@
+build:
+  stage: build
+  script:
+    - autoreconf -fvi
+    - ./configure
+    - make rpm
+  artifacts:
+    paths:
+      - auks*rpm
+
+
+# run tests using the binary built before
+#test:
+#  stage: test
+#  script:
+#    - ./test.sh
