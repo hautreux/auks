@@ -71,9 +71,9 @@ for the AUKS API.
 %package slurm
 Summary: Slurm plugins for Auks
 Group: System Environment/Base
-Requires: slurm >= 1.3.0
+Requires: slurm >= 20.11.0
 Requires: auks >= %{version}
-BuildRequires: slurm-devel >= 1.3.0
+BuildRequires: slurm-devel >= 20.11.0
 %description slurm
 Plugins that provides Kerberos Credential Support to Slurm
 %endif
