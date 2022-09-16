@@ -1,0 +1,15 @@
+language: c
+
+os: linux
+
+arch:
+  - amd64
+  - arm64
+
+compiler:
+  - gcc
+
+script:
+  - autoreconf -fvi
+  - ./configure
+  - make
