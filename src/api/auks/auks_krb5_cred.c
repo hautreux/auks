@@ -462,7 +462,7 @@ auks_krb5_cred_store(char *cachefilename, char *buffer,
 	krb5_context context;
 	krb5_auth_context auth_context;
 	krb5_ccache ccache;
-	krb5_creds **creds;
+	krb5_creds **cred, **creds;
 	krb5_data data;
 	krb5_replay_data krdata;
 
@@ -529,24 +529,26 @@ auks_krb5_cred_store(char *cachefilename, char *buffer,
 	}
 	auks_log("credential cache successfully initialized",cachefilename);
 
-	/* store credential in credential cache */
-	err_code = krb5_cc_store_cred(context,ccache,*creds);
-	if (err_code) {
-		auks_error("unable to store credential in credential "
-			   "cache : %s",error_message(err_code));
-		fstatus = AUKS_ERROR_KRB5_CRED_STORE_CRED ;
-	} else {
-		auks_log("credential successfully stored in credential "
-			 "cache %s", cachefilename);
-		fstatus = AUKS_SUCCESS ;
+	/* store credentials in credential cache */
+	for (cred = creds; *cred != NULL; ++cred) {
+		err_code = krb5_cc_store_cred(context,ccache,*cred);
+		if (err_code) {
+			auks_error("unable to store credential in credential "
+					"cache : %s",error_message(err_code));
+			fstatus = AUKS_ERROR_KRB5_CRED_STORE_CRED ;
+			goto cc_exit;
+		} else {
+			auks_log("credential successfully stored in credential "
+					"cache %s", cachefilename);
+			fstatus = AUKS_SUCCESS ;
+		}
 	}
 
 cc_exit:
 	krb5_cc_close(context, ccache);
 
 cred_exit:
-	krb5_free_creds(context, *creds);
-	free(creds);
+	krb5_free_tgt_creds(context, creds);
 
 auth_ctx_exit:
 	krb5_auth_con_free(context, auth_context);
@@ -714,8 +716,7 @@ auks_krb5_cred_get_fwd(char *ccachefilename, char *serverName,
 	krb5_free_data(context,p_outbuf);
 
 rd_cred_exit:
-	krb5_free_creds(context,*out_creds_array);
-	free(out_creds_array);
+	krb5_free_tgt_creds(context,out_creds_array);
 
 fwd_exit:
 	krb5_free_data_contents(context, &outbuf);
@@ -915,7 +916,7 @@ auks_krb5_cred_renew_buffer(char *in_buf,size_t in_buf_len,
 	krb5_context context;
 	krb5_auth_context auth_context;
 
-	krb5_creds **creds;
+	krb5_creds **cred, **creds;
 	krb5_data data;
 	krb5_replay_data krdata;
 
@@ -970,8 +971,17 @@ auks_krb5_cred_renew_buffer(char *in_buf,size_t in_buf_len,
 	/* renew credential cache TGT */
 	memset(&renew_cred, 0,sizeof(renew_cred));
 
+	for (cred = creds; *cred != NULL; ++cred) {
+		if (_krb_is_local_tgt((*cred)->server, &(*cred)->client->realm))
+			break;
+	}
+	if (*cred == NULL) {
+		fstatus = AUKS_ERROR_KRB5_CRED_NO_TGT_FOUND ;
+		goto cred_exit;
+	}
+
 	/* copy client principal in futur credential */
-	err_code = krb5_copy_principal(context,(*creds)->client,
+	err_code = krb5_copy_principal(context,(*cred)->client,
 				       &renew_cred.client);
 	if (err_code) {
 		auks_error("unable to put client principal into "
@@ -983,7 +993,7 @@ auks_krb5_cred_renew_buffer(char *in_buf,size_t in_buf_len,
 
 	/* copy krbtgt/... principal in futur credential as required */
 	/* server principal for TGS */
-	err_code = krb5_copy_principal(context,(*creds)->server,
+	err_code = krb5_copy_principal(context,(*cred)->server,
 				       &renew_cred.server);
 	if (err_code) {
 		auks_error("unable to put server principal into "
@@ -996,15 +1006,15 @@ auks_krb5_cred_renew_buffer(char *in_buf,size_t in_buf_len,
 	/* by default renew for same addresses */
 	/* otherwise renew getting a addressless ticket */
 	if ( flags == 0 )
-		addresses = (*creds)->addresses ;
+		addresses = (*cred)->addresses ;
 	else
 		addresses = NULL ;
 
 	/* renew credential */
-	err_code = krb5_get_cred_via_tkt(context,(*creds),
+	err_code = krb5_get_cred_via_tkt(context,(*cred),
 					 ( KDC_OPT_CANONICALIZE |
 					   KDC_OPT_RENEW |
-					   ( (*creds)->ticket_flags &
+					   ( (*cred)->ticket_flags &
 					     KDC_TKT_COMMON_MASK )  ),
 					 addresses,
 					 &renew_cred,&p_cred_out);
@@ -1055,8 +1065,7 @@ renew_exit:
 
 cred_exit:
 	krb5_free_cred_contents(context,&renew_cred);
-	krb5_free_creds(context, *creds);
-	free(creds);
+	krb5_free_tgt_creds(context, creds);
 
 auth_ctx_exit:
 	krb5_auth_con_free(context, auth_context);
@@ -1068,6 +1077,164 @@ exit:
 	return fstatus;
 }
 
+int
+auks_krb5_cred_cross_realm_buffer(char *realm,
+			      char *in_buf,size_t in_buf_len,
+			      char** pout_buf,size_t *pout_buf_len)
+{
+	int fstatus = AUKS_ERROR ;
+
+	/* kerberos related variables */
+	krb5_error_code err_code;
+	krb5_context context;
+	krb5_auth_context auth_context;
+
+	krb5_creds **creds;
+	krb5_data data;
+	krb5_replay_data krdata;
+
+	krb5_data *p_outbuf;
+
+	krb5_creds cr_cred;
+	krb5_creds *p_cred_out = NULL;
+
+	krb5_address **addresses;
+
+	char* buffer;
+	size_t length;
+
+	/* initialize kerberos context */
+	err_code = krb5_init_context(&context);
+	if (err_code) {
+		auks_error("unable to initialize kerberos context : %s",
+			   error_message(err_code));
+		fstatus = AUKS_ERROR_KRB5_CRED_INIT_CTX ; 
+		goto exit;
+	}
+	auks_log("kerberos context successfully initialized");
+
+	/* initialize a nullified kerberos authentication context in order */
+	/* to decode credential from buffer */
+	err_code = krb5_auth_con_init(context, &auth_context);
+	if (err_code) {
+		auks_error("unable to initialize kerberos authentication"
+			   " context : %s",error_message(err_code));
+		fstatus = AUKS_ERROR_KRB5_CRED_INIT_AUTH_CTX ;
+		goto ctx_exit;
+	}
+	auks_log("kerberos authentication context successfully initialized");
+
+	/* clear kerberos authentication context flags */
+	krb5_auth_con_setflags(context, auth_context, 0);
+
+	/* build a kerberos data structure with input buffer */
+	data.data = in_buf;
+	data.length = in_buf_len;
+
+	/* build kerberos credential structure using this data structure */
+	err_code = krb5_rd_cred(context, auth_context, &data,&creds,&krdata);
+	if (err_code) {
+		auks_error("unable to deserialize credential data : %s",
+			   error_message(err_code));
+		fstatus = AUKS_ERROR_KRB5_CRED_RD_CRED ;
+		goto auth_ctx_exit;
+	}
+	auks_log("credential data successfully deserialized");
+
+	memset(&cr_cred, 0,sizeof(cr_cred));
+
+	/* copy client principal in futur credential */
+	err_code = krb5_copy_principal(context,(*creds)->client,
+				       &cr_cred.client);
+	if (err_code) {
+		auks_error("unable to put client principal into "
+			   "request cred : %s",error_message(err_code));
+		fstatus = AUKS_ERROR_KRB5_CRED_CP_PRINC ;
+		goto cred_exit;
+	}
+	auks_log("client principal successfully put into request cred");
+
+	/* build new cross-realm server principal for TGS */
+	err_code = krb5_build_principal(context, &cr_cred.server,
+					(*creds)->server->realm.length,
+					(*creds)->server->realm.data,
+					KRB5_TGS_NAME, realm, NULL);
+	if (err_code) {
+		auks_error("unable to put server principal into "
+			   "request cred : %s",error_message(err_code));
+		fstatus = AUKS_ERROR_KRB5_CRED_CP_PRINC ;
+		goto cred_exit;
+	}
+	auks_log("server principal successfully put into request cred");
+
+	/* get cross-realm ticket */
+	err_code = krb5_get_cred_via_tkt(context,(*creds),
+					 ( KDC_OPT_CANONICALIZE |
+					   KDC_OPT_FORWARDED |
+					   ( (*creds)->ticket_flags &
+					     KDC_TKT_COMMON_MASK )  ),
+					 addresses=NULL,
+					 &cr_cred,&p_cred_out);
+	if (err_code) {
+		auks_error("unable to get cross-realm cred from auks"
+			   " cred buffer : %s",error_message(err_code));
+		fstatus = AUKS_ERROR_KRB5_CRED_GET_CROSS_REALM_CRED ;
+		goto cred_exit;
+	}
+	auks_log("cross-realm cred successfully"
+		 " got using auks cred buffer");
+
+	/* extract credential data along with the initial credential */
+	err_code = krb5_mk_ncred(context,auth_context,
+				 (krb5_creds *[]) {*creds, p_cred_out, NULL},
+				 &p_outbuf,&krdata);
+	if (err_code) {
+		auks_error("unable to dump credential into working buffer : %s",
+			   error_message(err_code));
+		fstatus = AUKS_ERROR_KRB5_CRED_MK_CRED ;
+		goto cr_exit;
+	}
+	auks_log("credential successfully dumped into buffer");
+
+	/* allocate output buffer */
+	length = p_outbuf->length;
+	buffer = (char *) malloc(length * sizeof(char));
+	if (buffer == NULL) {
+		auks_error("unable to allocate memory for credential data "
+			   "storage");
+		fstatus = AUKS_ERROR_KRB5_CRED_MALLOC ;
+		goto mk_exit;
+	}
+
+	/* copy credential data into output buffer */
+	memcpy(buffer,p_outbuf->data,length);
+	*pout_buf = buffer;
+	*pout_buf_len = length;
+	auks_log("credential successfully stored in output buffer");
+	fstatus = AUKS_SUCCESS ;
+
+	auks_log("in length : %u | out length : %u",
+		 in_buf_len,
+		 p_outbuf->length);
+mk_exit:
+	krb5_free_data(context,p_outbuf);
+
+cr_exit:
+	krb5_free_creds(context,p_cred_out);
+
+cred_exit:
+	krb5_free_cred_contents(context,&cr_cred);
+	krb5_free_tgt_creds(context, creds);
+
+auth_ctx_exit:
+	krb5_auth_con_free(context, auth_context);
+
+ctx_exit:
+	krb5_free_context(context);
+
+exit:
+	return fstatus;
+}
 
 
 int
@@ -1214,8 +1381,7 @@ fwd_exit:
 
 cred_exit:
 	krb5_free_cred_contents(context,&fwd_cred);
-	krb5_free_creds(context, *creds);
-	free(creds);
+	krb5_free_tgt_creds(context, creds);
 
 auth_ctx_exit:
 	krb5_auth_con_free(context, auth_context);

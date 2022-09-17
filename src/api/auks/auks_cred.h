@@ -84,7 +84,7 @@
 #define AUKS_CRED_INVALID_TIME       0
 #define AUKS_CRED_FILE_MAX_LENGTH  128
 
-#define AUKS_CRED_DATA_MAX_LENGTH 4096
+#define AUKS_CRED_DATA_MAX_LENGTH 8192
 
 typedef struct auks_cred_info {
 	char principal[AUKS_PRINCIPAL_MAX_LENGTH + 1];
@@ -196,6 +196,18 @@ int auks_cred_renew(auks_cred_t* credential,int flags);
  * \retval AUKS_ERROR_...
  */
 int auks_cred_deladdr(auks_cred_t* credential);
+
+/*!
+ * \brief Retrieve a cross-realm auks credential
+ *
+ * \param cross-realm name to fetch the credential for
+ * \param credential pointer on the auks credential structure to use
+ *
+ * \retval AUKS_SUCCESS
+ * \retval AUKS_ERROR
+ * \retval AUKS_ERROR_...
+ */
+int auks_cred_cross_realm(char *, auks_cred_t* credential);
 
 /*!
  * \brief Display an auks credential info on log

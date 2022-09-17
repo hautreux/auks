@@ -213,6 +213,32 @@ int auks_krb5_cred_deladdr_buffer(char *in_buf,size_t in_buf_len,
 				  char** pout_buf,size_t *pout_buf_len);
 
 /*!
+ * \brief Get a cross-realm TGT from input buffer into a newly 
+ *        allocated one
+ * \internal
+ *
+ * \param realm cross-realm name
+ * \param in_buf input buffer
+ * \param in_buf_len input buffer length
+ * \param pout_buf pointer on the output buffer
+ * \param pout_buf_len pointer on the output buffer length
+ *
+ * \retval AUKS_SUCCESS
+ * \retval AUKS_ERROR
+ * \retval AUKS_ERROR_KRB5_CRED_INIT_CTX
+ * \retval AUKS_ERROR_KRB5_CRED_INIT_AUTH_CTX
+ * \retval AUKS_ERROR_KRB5_CRED_RD_CRED
+ * \retval AUKS_ERROR_KRB5_CRED_MK_CRED
+ * \retval AUKS_ERROR_KRB5_CRED_MALLOC
+ * \retval AUKS_ERROR_KRB5_CRED_CP_PRINC
+ * \retval AUKS_ERROR_KRB5_CRED_GET_CROSSREALM_CRED
+ *
+ */
+int auks_krb5_cred_cross_realm_buffer(char *realm,
+				  char *in_buf,size_t in_buf_len,
+				  char** pout_buf,size_t *pout_buf_len);
+
+/*!
  * \brief Generates a new unique ccache usique krb5_cc_new_unique
  * \internal
  *

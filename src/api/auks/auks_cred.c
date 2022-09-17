@@ -79,6 +79,7 @@
 
 /* getpwnam_r */
 #include <sys/types.h>
+#include <sys/param.h>
 #include <pwd.h>
 
 /* kerberos stuff */
@@ -106,7 +107,7 @@ int auks_cred_init(auks_cred_t * credential, char *data, size_t length)
 	krb5_context context;
 	krb5_auth_context auth_context;
 	krb5_data kdata;
-	krb5_creds **creds;
+	krb5_creds **cred, **creds;
 	krb5_replay_data krdata;
 
 	char username[AUKS_PRINCIPAL_MAX_LENGTH + 1];
@@ -228,6 +229,16 @@ int auks_cred_init(auks_cred_t * credential, char *data, size_t length)
 	credential->info.starttime = (time_t) (*creds)->times.starttime ;
 	credential->info.endtime = (time_t) (*creds)->times.endtime ;
 	credential->info.renew_till = (time_t) (*creds)->times.renew_till ;
+	
+	/* adjust the timings if we have multiple credentials (i.e. cross-realm) */
+	for (cred = creds + 1; *cred != NULL; ++cred) {
+		credential->info.starttime =
+			MIN(credential->info.starttime, (time_t) (*cred)->times.starttime) ;
+		credential->info.endtime =
+			MIN(credential->info.endtime, (time_t) (*cred)->times.endtime) ;
+		credential->info.renew_till =
+			MAX(credential->info.renew_till, (time_t) (*cred)->times.renew_till) ;
+	}
 
 	/* addresslessness */
 	if (((*creds)->addresses) != NULL)
@@ -243,8 +254,7 @@ string_exit:
 	free(tmp_string);
 
 creds_exit:
-	krb5_free_creds(context,*creds);
-	free(creds);
+	krb5_free_tgt_creds(context,creds);
 
 auth_ctx_exit:
 	krb5_auth_con_free(context,auth_context);
@@ -378,6 +388,35 @@ auks_cred_renew(auks_cred_t * credential,int flags)
 					      credential->length,
 					      &rbuf,&rbuf_len,
 					      flags);
+	if ( fstatus == AUKS_SUCCESS ) {
+		/* check output buffer length versus auks credential */
+		/* internal buffer max length */
+		if ( (unsigned int) rbuf_len > 
+		     (unsigned int) credential->max_length) {
+			fstatus = AUKS_ERROR_CRED_INIT_BUFFER_TOO_LARGE ;
+		}
+		else {
+			auks_cred_free_contents(credential);
+			fstatus = auks_cred_init(credential,rbuf,rbuf_len);
+		}
+		free(rbuf);
+	}
+
+	return fstatus;
+}
+
+int
+auks_cred_cross_realm(char *realm, auks_cred_t * credential)
+{
+	int fstatus;
+
+	char* rbuf = NULL ;
+	size_t rbuf_len = 0 ;
+
+	fstatus = auks_krb5_cred_cross_realm_buffer(realm,
+						credential->data,
+						credential->length,
+						&rbuf,&rbuf_len);
 	if ( fstatus == AUKS_SUCCESS ) {
 		/* check output buffer length versus auks credential */
 		/* internal buffer max length */
