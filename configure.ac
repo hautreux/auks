@@ -33,6 +33,9 @@ AC_PROG_YACC
 dnl Look after SLURM resource manager
 AX_SLURM
 
+dnl Look after PAM library
+AX_PAM
+
 dnl Look for tirpc
 AC_ARG_ENABLE(tirpc,
 	[AC_HELP_STRING([--enable-tirpc],
@@ -52,6 +55,7 @@ AC_CONFIG_FILES([Makefile
 		src/auksd/Makefile
 		src/plugins/Makefile
 		src/plugins/slurm/Makefile
+		src/plugins/pam/Makefile
 		etc/init.d.auksd
 		etc/init.d.auksdrenewer
 		etc/init.d.aukspriv
