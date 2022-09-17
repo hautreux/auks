@@ -743,15 +743,16 @@ auks_api_renew_cred(auks_engine_t * engine,char* cred_cache,int mode)
 		/* store renewed cred */
 		fstatus = auks_cred_store(&cred,cred_cache);
 		if ( fstatus != AUKS_SUCCESS ) {
-			auks_log2("unable to store cred in file '%s' : %s",
-				  cred_cache,auks_strerror(fstatus));
+			auks_log2("unable to store cred '%s' : %s",
+				  (cred_cache==NULL)?"default file":cred_cache,
+				  auks_strerror(fstatus));
 			fstatus = AUKS_ERROR_API_REPLY_PROCESSING ;
 			loop=0;
 			goto end_loop;
 		}
 		else {
-			auks_log3("auks cred successfully stored in file '%s'",
-				  cred_cache);
+			auks_log3("auks cred successfully stored in %s",
+				  (cred_cache==NULL)?"default file":cred_cache);
 			fstatus = AUKS_SUCCESS;
 		}
 
