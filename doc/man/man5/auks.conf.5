@@ -119,6 +119,11 @@ The default is \fB/dev/stdout\fR.
 specifies the level of verbosity to use. The default is \fB0\fR which 
 means no log message.
 .TP
+\fBUseSyslog\fR
+optional flag that specifies that the logs should be written to the system's
+native log. Any value other than 0 will be interpreted as enabled.
+The default is 0 (disabled).
+.TP
 \fBDebugFile\fR
 specifies the file in which to put AUKS debug details.
 The default is \fB/dev/stdout\fR.

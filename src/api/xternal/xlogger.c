@@ -81,6 +81,7 @@
 #include <time.h>
 #include <stdarg.h>
 #include <string.h>
+#include <syslog.h>
 
 static pthread_mutex_t error_mutex = PTHREAD_MUTEX_INITIALIZER ;
 #define ERROR_LOCK() pthread_mutex_lock(&error_mutex)
@@ -99,6 +100,7 @@ static pthread_mutex_t verbose_mutex = PTHREAD_MUTEX_INITIALIZER ;
 static int xverbose_max_level=0;
 static int xdebug_max_level=0;
 static int xerror_max_level=1;
+static int xverbose_use_syslog=0;
 
 static FILE* xerror_stream = NULL;
 static FILE* xverbose_stream = NULL;
@@ -160,12 +162,37 @@ void xverbose_setmaxlevel(int level){
   xverbose_max_level=level;
 }
 
+void xverbose_usesyslog() {
+  xverbose_use_syslog=1;
+}
+
+void xsyslog(int level, char *format, va_list args) {
+  int pri = LOG_INFO;
+  switch(level) {
+    case 1:
+      pri = LOG_DEBUG;
+      break;
+    case 2:
+      pri = LOG_INFO;
+      break;
+    case 3:
+      pri = LOG_ERR;
+      break;
+   }
+   vsyslog(pri, format, args);
+}
+
 void xverbose_base(int level,char* format,va_list args){
 
   time_t current_time;
 
   FILE* default_stream=stdout;
   FILE* stream;
+
+  if (xverbose_use_syslog) {
+    xsyslog(level, format, args);
+    return;
+  }
 
   if(xverbose_stream==NULL)
     stream=default_stream;
