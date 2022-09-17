@@ -578,6 +578,9 @@ spank_auks_remote_init (spank_t sp, int ac, char *av[])
 	if ( fstatus != 0 )
 		xerror("unable to set KRB5CCNAME env var");
 
+	/* fire helper script for the first time */
+	auks_api_run_helper(engine.helper_script, auks_credcache, uid, gid);
+
  out_cred:
 	/* free auks cred */
 	auks_cred_free_contents(&cred);

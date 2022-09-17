@@ -126,7 +126,12 @@ The default is \fB/dev/stdout\fR.
 \fBDebugLevel\fR
 specifies the level of debug to use. The default is \fB0\fR which 
 means no debug message.
-
+.TP
+\fBHelperScript\fR
+optional path to an executable to run during renewal and first cred get operations.
+This executable will have the corresponding KRB5CCNAME environment variable set
+to enable kerberos integration with other systems (e.g. to run aklog for AFS).
+.TP
 
 .SH "AUKSD CONFIGURATION"
 .LP

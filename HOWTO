@@ -463,3 +463,17 @@ in mind, so it is better to describe the set up with 3 nodes.
     srun: error: compute: task 0: Exited with exit code 1
     $ 
 
+> Integration with AFS, EOS, $thing
+
+Filesystems (or other components) may want to leverage kerberos credentials for access, but it is often necessary to carry out additional steps in order to obtain the right authentication tokens.
+For instance, for AFS access, running `aklog` (or equivalent) is necessary to obtain AFS authentication tokens. CERN's EOS needs to generate similar auth tokens with `eosfusebind`, etc.
+Auks provides the option to run a user-provided helper script that runs the desired additional steps.
+
+This helper script will be called:
+
+1. After plugin initialisation, right after obtaining a valid kerberos ticket.
+
+2. Each time credential renewal has taken place.
+
+To use this feature, add a `HelperScript` key in the api section of the auks config (at least for the workernodes where renewal is happening) pointing to an executable to be run as described above.
+This executable will be run as the user who submitted the Slurm job.

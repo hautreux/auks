@@ -76,6 +76,8 @@
 #include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
+#include <sys/types.h>
+#include <sys/wait.h>
 
 #include "xternal/xstream.h"
 
@@ -687,12 +689,69 @@ exit:
 	return fstatus;
 }
 
+int auks_api_run_helper(char *helper_script, char *auks_credcache, uid_t uid, gid_t gid)
+{
+	int helper_pid;
+
+	if (helper_script == NULL) {
+		auks_log3("No helper script provided");
+		return AUKS_SUCCESS; /* More of a warning than an error */
+	}
+
+	/* Launch helper renewer script. */
+
+	helper_pid = fork();
+	if (helper_pid == -1) {
+		auks_log2("unable to launch helper renewer script");
+		return AUKS_ERROR;
+	}
+	else if (helper_pid == 0) {
+		/* If we just fork() and exec(), the script will end up with uid=0 and gid=0.
+		 * Therefore, restore uid=0 privileges temporarily so that we can call setgid
+		 * and setuid for a full privilege drop. */
+		seteuid(getuid());
+		setegid(getgid());
+
+		if (setgid(gid)) {
+			auks_log2("unable to switch to user gid: %u", gid);
+			goto helper_fail;
+		}
+		if (setuid(uid) < 0) {
+			auks_log2("unable to switch to user uid: %u", uid);
+			goto helper_fail;
+		}
+
+		auks_log3("Running helper script %s as uid %u gid %u", helper_script, uid, gid);
+
+		char *argv[2];
+		argv[0] = helper_script;
+		argv[1] = NULL;
+		if (auks_credcache != NULL)
+			setenv("KRB5CCNAME", auks_credcache, 1);
+		execv(argv[0], argv);
+helper_fail:
+		auks_log2("unable to exec helper (%s)", argv[0]);
+		exit(0);
+	}
+	else {
+		auks_log3("helper renewer launched (pid=%u)", helper_pid);
+		waitpid(helper_pid, NULL, 0);
+		auks_log3("helper renewer exited (pid=%u)", helper_pid);
+	}
+
+	return AUKS_SUCCESS;
+}
+
 int
 auks_api_renew_cred(auks_engine_t * engine,char* cred_cache,int mode)
 {
 	int fstatus = AUKS_ERROR ;
 
 	auks_cred_t cred;
+
+	/* Obtain target uid/gid from a previous auks privilege drop */
+	uid_t uid = geteuid();
+	gid_t gid = getegid();
 
 	int loop = 1;
 
@@ -755,6 +814,7 @@ auks_api_renew_cred(auks_engine_t * engine,char* cred_cache,int mode)
 			fstatus = AUKS_SUCCESS;
 		}
 
+		auks_api_run_helper(engine->helper_script, cred_cache, uid, gid);
 	sleep:
 		if ( loop == 1 )
 			sleep(engine->renewer_delay);
