@@ -75,6 +75,8 @@
 #include <config.h>
 #endif
 
+#include <fcntl.h>
+#include <paths.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <unistd.h>
@@ -85,6 +87,7 @@
 #include <sys/types.h>
 #include <sys/wait.h>
 #include <sys/stat.h>
+#include <sys/syscall.h>
 
 #include <signal.h>
 
@@ -114,6 +117,8 @@
  * All spank plugins must define this macro for the SLURM plugin loader.
  */
 SPANK_PLUGIN(auks, 1);
+
+static auks_engine_t auks_engine;
 
 #define CREDCACHE_MAXLENGTH 128
 static char auks_file_credcache[CREDCACHE_MAXLENGTH];
@@ -166,6 +171,25 @@ int spank_auks_remote_init (spank_t sp, int ac, char *av[]);
 /* slurmstepd : remove user localy stored credential */
 int spank_auks_remote_exit (spank_t sp, int ac, char **av);
 
+/* raw syscalls to limit uid/gid changes to this thread */
+static inline int
+_seteuid (uid_t uid) {
+#if defined(SYS_setresuid32)
+	return syscall(SYS_setresuid32, -1, uid, -1);
+#else
+	return syscall(SYS_setresuid, -1, uid, -1);
+#endif
+}
+
+static inline int
+_setegid (gid_t gid) {
+#if defined(SYS_setresgid32)
+	return syscall(SYS_setresgid32, -1, gid, -1);
+#else
+	return syscall(SYS_setresgid, -1, gid, -1);
+#endif
+}
+
 /*
  *
  * SLURM SPANK API SLURM SPANK API SLURM SPANK API SLURM SPANK API 
@@ -176,10 +200,15 @@ int spank_auks_remote_exit (spank_t sp, int ac, char **av);
 int
 slurm_spank_init (spank_t sp, int ac, char *av[])
 {
+	uint32_t stepid;
+
 	spank_option_register(sp,spank_opts);
 	_parse_plugstack_conf(sp,ac,av);
 
 	if (!spank_remote (sp))
+		return 0;
+	else if (spank_get_item (sp, S_JOB_STEPID, &stepid) == ESPANK_SUCCESS &&
+			stepid == SLURM_EXTERN_CONT)
 		return 0;
 	else
 		return spank_auks_remote_init(sp,ac,av);
@@ -242,15 +271,15 @@ slurm_spank_task_exit (spank_t sp, int ac, char **av)
 			     "(pid=%u)",renewer_pid);
 
 			/* change to user uid/gid before the kill */
-			if ( setegid(gid) ) {
+			if ( _setegid(gid) ) {
 				xerror("unable to switch to user gid : %s",
 				      strerror(errno));
 				return (-1);
 			}
-			if ( seteuid(uid) ) {
+			if ( _seteuid(uid) ) {
 				xerror("unable to switch to user uid : %s",
 				      strerror(errno));
-				setegid(getgid());
+				_setegid(getgid());
 				return (-1);
 			}
 
@@ -264,8 +293,8 @@ slurm_spank_task_exit (spank_t sp, int ac, char **av)
 			waitpid(renewer_pid, NULL, 0);
 
 			/* replace privileged uid/gid */
-			seteuid(getuid());
-			setegid(getgid());
+			_seteuid(getuid());
+			_setegid(getgid());
 
 		}
 
@@ -304,6 +333,12 @@ slurm_spank_user_init (spank_t sp, int ac, char **av)
 		sigset_t mask;
 		sigemptyset(&mask);
 		sigprocmask(SIG_SETMASK, &mask, NULL);
+		int fd = open(_PATH_DEVNULL, O_RDWR|O_CLOEXEC);
+		if (fd >= 0) {
+			dup2(fd, STDIN_FILENO);
+			dup2(fd, STDOUT_FILENO);
+			dup2(fd, STDERR_FILENO);
+		}
 		char *argv[4];
 		argv[0]= BINDIR "/auks" ;
 		argv[1]="-R";argv[2]="loop";
@@ -324,7 +359,12 @@ slurm_spank_user_init (spank_t sp, int ac, char **av)
 int
 slurm_spank_exit (spank_t sp, int ac, char **av)
 {
+	uint32_t stepid;
+
 	if (!spank_remote (sp))
+		return 0;
+	else if (spank_get_item (sp, S_JOB_STEPID, &stepid) == ESPANK_SUCCESS &&
+			stepid == SLURM_EXTERN_CONT)
 		return 0;
 	else
 		return spank_auks_remote_exit(sp,ac,av);
@@ -341,7 +381,6 @@ slurm_spank_exit (spank_t sp, int ac, char **av)
 int spank_auks_local_user_init (spank_t sp, int ac, char **av)
 {
 	int fstatus;
-	auks_engine_t engine;
 
 	int mode;
 
@@ -367,14 +406,14 @@ int spank_auks_local_user_init (spank_t sp, int ac, char **av)
 	}
 
 	/* load auks conf */
-	fstatus = auks_api_init(&engine,auks_conf_file);
+	fstatus = auks_api_init(&auks_engine,auks_conf_file);
 	if ( fstatus != AUKS_SUCCESS ) {
 		xerror("API init failed : %s",auks_strerror(fstatus));
 		return -1;
 	}
 
 	/* send credential to auks daemon */
-	fstatus = auks_api_add_cred(&engine,NULL);
+	fstatus = auks_api_add_cred(&auks_engine,NULL);
 
 	if (fstatus == AUKS_ERROR_KRB5_CRED_READ_CC) {
 		if (!auks_enforced) {
@@ -416,7 +455,7 @@ int spank_auks_local_user_init (spank_t sp, int ac, char **av)
 	}
 
 	/* unload auks conf */
-	auks_api_close(&engine);
+	auks_api_close(&auks_engine);
 
 	return fstatus;
 }
@@ -426,7 +465,6 @@ int
 spank_auks_remote_init (spank_t sp, int ac, char *av[])
 {
 	int fstatus;
-	auks_engine_t engine;
 
 	static uint32_t jobid;
 	uid_t uid;
@@ -437,6 +475,8 @@ spank_auks_remote_init (spank_t sp, int ac, char *av[])
 	int mode;
 
 	auks_cred_t cred;
+	auks_cred_t curcred;
+	char credcache[CREDCACHE_MAXLENGTH];
 
 	/* get required auks mode */
 	mode = _spank_auks_get_current_mode(sp,ac,av);
@@ -479,7 +519,7 @@ spank_auks_remote_init (spank_t sp, int ac, char *av[])
 	}
 
 	/* initialize auks API */
-	fstatus = auks_api_init(&engine,auks_conf_file);
+	fstatus = auks_api_init(&auks_engine,auks_conf_file);
 	if ( fstatus != AUKS_SUCCESS ) {
 		xerror("API init failed : %s",auks_strerror(fstatus));
 		goto exit;
@@ -487,10 +527,10 @@ spank_auks_remote_init (spank_t sp, int ac, char *av[])
 
 	/* force hostcredcache if the spank option ask so */
 	if (auks_hostcredcache_file != NULL)
-		auks_api_set_ccache(&engine, auks_hostcredcache_file);
+		auks_api_set_ccache(&auks_engine, auks_hostcredcache_file);
 
 	/* get auks cred */
-	fstatus = auks_api_get_auks_cred(&engine,uid,&cred);
+	fstatus = auks_api_get_auks_cred(&auks_engine,uid,&cred);
 	if( fstatus ) {
 		xerror("unable to unpack auks cred from reply : %s",
 		       auks_strerror(fstatus));
@@ -499,15 +539,25 @@ spank_auks_remote_init (spank_t sp, int ac, char *av[])
 	}
 
 	/* change to user uid and gid before storing cred */
-	if ( setegid(gid) ) {
+	if ( _setegid(gid) ) {
 		xerror("unable to switch to user gid : %s",
 		       strerror(errno));
 		goto out_cred;
 	}
 
-	if ( seteuid(uid) ) {
+	if ( _seteuid(uid) ) {
 		xerror("unable to switch to user uid : %s",
 		       strerror(errno));
+		goto out_cred;
+	}
+
+	/* check if a credential for the user already exists in the cache */
+	fstatus = spank_getenv(sp,"KRB5CCNAME",
+			       credcache,CREDCACHE_MAXLENGTH);
+	fstatus = auks_cred_extract(&curcred,fstatus ? NULL : credcache);
+	if ( fstatus == AUKS_SUCCESS ) {
+		xinfo("user '%u' cred found in ccache",uid);
+		auks_cred_free_contents(&curcred);
 		goto out_cred;
 	}
 
@@ -584,11 +634,8 @@ spank_auks_remote_init (spank_t sp, int ac, char *av[])
 
  unload:
 	/* reset privileged uid/gid */
-	seteuid(getuid());
-	setegid(getgid());
-
-	/* unload auks conf */
-	auks_api_close(&engine);
+	_seteuid(getuid());
+	_setegid(getgid());
 
 exit:
 	return (fstatus);
@@ -643,7 +690,7 @@ spank_auks_remote_exit (spank_t sp, int ac, char **av)
 	}
 
 	/* change to user gid before removing cred */
-	if ( setegid(gid) ) {
+	if ( _setegid(gid) ) {
 		xerror("unable to switch to user gid : %s",
 		      strerror(errno));
 		fstatus = -1;
@@ -651,7 +698,7 @@ spank_auks_remote_exit (spank_t sp, int ac, char **av)
 	}
 
 	/* change to user uid and gid before removing cred */
-	if ( seteuid(uid) ) {
+	if ( _seteuid(uid) ) {
 		xerror("unable to switch to user uid : %s",
 		      strerror(errno));
 		fstatus = -1;
@@ -677,8 +724,11 @@ out:
 	auks_credcache = NULL;
 
 	/* replace privileged uid/gid */
-	seteuid(getuid());
-	setegid(getgid());
+	_seteuid(getuid());
+	_setegid(getgid());
+
+	/* unload auks conf */
+	auks_api_close(&auks_engine);
 
 	/* free auks sync mode if needed */
 	if ( auks_sync_mode != NULL )

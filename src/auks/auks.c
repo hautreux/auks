@@ -133,6 +133,9 @@ main(int argc,char** argv)
   
 	auks_engine_t engine;
 
+	FILE* logfile=NULL;
+	FILE* debugfile=NULL;
+
 	auks_cred_t* creds;
 	int creds_nb;
 
@@ -224,6 +227,29 @@ main(int argc,char** argv)
 
 	if ( verbose_level > 0 )
 		auks_api_set_logfile(&engine,"/dev/stdout");
+	else if ( action == RENEW_REQUEST ) {
+		if((strlen(engine.renewer_logfile) > 0) &&
+		   engine.renewer_loglevel &&
+		   (logfile = fopen(engine.renewer_logfile,"a+"))) {
+			xverbose_setstream(logfile);
+			xerror_setstream(logfile);
+			xverbose_setmaxlevel(engine.renewer_loglevel);
+			xerror_setmaxlevel(engine.renewer_loglevel);
+		}
+		else {
+			xverbose_setmaxlevel(0);
+			xerror_setmaxlevel(0);
+		}
+		if((strlen(engine.renewer_debugfile) > 0) &&
+		   engine.renewer_debuglevel &&
+		   (debugfile = fopen(engine.renewer_debugfile,"a+"))) {
+			xdebug_setstream(debugfile);
+			xdebug_setmaxlevel(engine.renewer_debuglevel);
+		}
+		else {
+			xdebug_setmaxlevel(0);
+		}
+	}
 	
 	switch(action){
 		
