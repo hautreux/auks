@@ -95,6 +95,39 @@
 #define RENEW_MODE_UNTIL_REMOVAL    2
 #define RENEW_MODE_UNTIL_EXPIRATION 3
 
+static void
+_print_creds(auks_cred_t* creds, int creds_nb)
+{
+	char starttime[32], endtime[32], renew_till[32];
+	struct tm *tm;
+	int i;
+
+	printf("%-10s %-34s %-24s %-24s %-24s\n",
+		"UID",
+		"PRINCIPAL",
+		"START_TIME",
+		"END_TIME",
+		"RENEW_UNTIL");
+
+	for ( i = 0 ; i < creds_nb ; i++ ) {
+		if ((tm = localtime(&creds[i].info.starttime)) == NULL ||
+		    strftime(starttime,sizeof(starttime),"%FT%T%z",tm) == 0)
+			continue;
+		if ((tm = localtime(&creds[i].info.endtime)) == NULL ||
+		    strftime(endtime,sizeof(endtime),"%FT%T%z",tm) == 0)
+			continue;
+		if ((tm = localtime(&creds[i].info.renew_till)) == NULL ||
+		    strftime(renew_till,sizeof(renew_till),"%FT%T%z",tm) == 0)
+			continue;
+
+		printf("%-10u %-34s %s %s %s\n",
+			creds[i].info.uid,
+			creds[i].info.principal,
+			starttime,
+			endtime,
+			renew_till);
+	}
+}
 
 int
 main(int argc,char** argv)
@@ -240,6 +273,8 @@ main(int argc,char** argv)
 		
 	case DUMP_REQUEST :
 		fstatus = auks_api_dump(&engine,&creds,&creds_nb);
+		if ( fstatus == AUKS_SUCCESS )
+			_print_creds(creds,creds_nb);
 		break;
 
 	case REMOVE_REQUEST :
